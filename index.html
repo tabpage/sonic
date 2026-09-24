@@ -1,0 +1,4584 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-accent="teal">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="dark light" />
+<meta name="theme-color" content="#06080f" />
+<title>Sonic — AI Workspace</title>
+
+<style>
+/* ============================================================
+   01. DESIGN TOKENS
+   ============================================================ */
+:root {
+  --accent-h: 168;
+  --accent-s: 76%;
+  --accent-l-base: 58%;
+  --accent-l: var(--accent-l-base);
+
+  --accent:      hsl(var(--accent-h) var(--accent-s) var(--accent-l));
+  --accent-2:    hsl(calc(var(--accent-h) + 42) 90% 68%);
+  --accent-soft: hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.13);
+  --accent-line: hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.34);
+  --accent-glow: hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.30);
+  --accent-ink:  #050b12;
+
+  --bg:            #06080f;
+  --bg-2:          #090c15;
+  --panel:         rgba(255, 255, 255, 0.038);
+  --panel-2:       rgba(255, 255, 255, 0.062);
+  --panel-3:       rgba(255, 255, 255, 0.09);
+  --border:        rgba(255, 255, 255, 0.085);
+  --border-2:      rgba(255, 255, 255, 0.15);
+
+  --text:       #e9edf7;
+  --text-dim:   #8e99b0;
+  --text-faint: #5d6779;
+
+  --danger: #ff6b6b;
+  --ok:     #4ade80;
+
+  --r-xl: 22px;
+  --r-lg: 16px;
+  --r-md: 12px;
+  --r-sm: 9px;
+
+  --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --sidebar-w: 288px;
+  --shadow-lg: 0 28px 70px -30px rgba(0, 0, 0, 0.9);
+}
+
+:root[data-accent="red"]    { --accent-h: 0;   --accent-s: 92%;  --accent-l-base: 66%; }
+:root[data-accent="orange"] { --accent-h: 28;  --accent-s: 100%; --accent-l-base: 62%; }
+:root[data-accent="yellow"] { --accent-h: 45;  --accent-s: 95%;  --accent-l-base: 58%; }
+:root[data-accent="green"]  { --accent-h: 145; --accent-s: 62%;  --accent-l-base: 54%; }
+:root[data-accent="blue"]   { --accent-h: 225; --accent-s: 100%; --accent-l-base: 71%; }
+:root[data-accent="teal"]   { --accent-h: 168; --accent-s: 76%;  --accent-l-base: 58%; }
+:root[data-accent="purple"] { --accent-h: 272; --accent-s: 96%;  --accent-l-base: 72%; }
+:root[data-accent="white"]  { --accent-h: 220; --accent-s: 20%;  --accent-l-base: 90%; }
+
+:root[data-theme="light"] {
+  --bg:      #f4f6fb;
+  --bg-2:    #ffffff;
+  --panel:   rgba(15, 22, 40, 0.035);
+  --panel-2: rgba(15, 22, 40, 0.06);
+  --panel-3: rgba(15, 22, 40, 0.09);
+  --border:  rgba(15, 22, 40, 0.10);
+  --border-2:rgba(15, 22, 40, 0.20);
+
+  --text:       #10131c;
+  --text-dim:   #5a6377;
+  --text-faint: #8b93a5;
+
+  --accent-l: calc(var(--accent-l-base) - 14%);
+  --accent-ink: #ffffff;
+  --shadow-lg: 0 28px 70px -34px rgba(20, 30, 60, 0.4);
+}
+:root[data-theme="light"][data-accent="white"] {
+  --accent-h: 222; --accent-s: 14%; --accent-l-base: 34%;
+}
+:root[data-theme="light"][data-accent="yellow"] { --accent-l-base: 46%; }
+:root[data-theme="light"][data-accent="green"]  { --accent-l-base: 42%; }
+
+/* ============================================================
+   02. RESET
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 15.5px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  transition: background-color 0.35s var(--ease), color 0.35s var(--ease);
+}
+
+button, input, textarea, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+h1, h2, h3, h4, p, figure { margin: 0; }
+ul, ol { margin: 0; padding: 0; list-style: none; }
+
+::selection { background: var(--accent-soft); color: var(--text); }
+
+:where(button, a, input, textarea, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+/* ============================================================
+   03. SCROLLBARS
+   ============================================================ */
+* { scrollbar-width: thin; scrollbar-color: var(--panel-3) transparent; }
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background: var(--panel-3);
+  border: 3px solid transparent;
+  border-radius: 99px;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover { background: var(--border-2); background-clip: content-box; }
+
+/* ============================================================
+   04. AMBIENT BACKGROUND
+   ============================================================ */
+.aurora {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.aurora__blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(40px);
+  opacity: 0.7;
+  will-change: transform;
+}
+.aurora__blob--a {
+  top: -32vmax; left: -22vmax;
+  width: 64vmax; height: 64vmax;
+  background: radial-gradient(circle, var(--accent-soft), transparent 62%);
+  animation: drift-a 28s var(--ease) infinite;
+}
+.aurora__blob--b {
+  right: -28vmax; bottom: -32vmax;
+  width: 70vmax; height: 70vmax;
+  background: radial-gradient(circle,
+    hsl(calc(var(--accent-h) + 55) 90% 66% / 0.12), transparent 62%);
+  animation: drift-b 34s var(--ease) infinite;
+}
+@keyframes drift-a {
+  0%, 100% { transform: translate3d(-8%, -5%, 0) scale(1); }
+  50%      { transform: translate3d(8%, 6%, 0) scale(1.18); }
+}
+@keyframes drift-b {
+  0%, 100% { transform: translate3d(7%, 5%, 0) scale(1.06); }
+  50%      { transform: translate3d(-7%, -8%, 0) scale(0.92); }
+}
+.aurora__grid {
+  position: absolute;
+  inset: -1px;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 56px 56px;
+  opacity: 0.35;
+  -webkit-mask-image: radial-gradient(80% 65% at 55% 34%, #000 8%, transparent 80%);
+          mask-image: radial-gradient(80% 65% at 55% 34%, #000 8%, transparent 80%);
+}
+
+/* ============================================================
+   05. APP SHELL
+   ============================================================ */
+.app {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
+  height: 100vh;
+  height: 100dvh;
+}
+
+/* ============================================================
+   06. SIDEBAR
+   ============================================================ */
+.sidebar {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  min-width: 0;
+  border-right: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg-2) 82%, transparent);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  z-index: 30;
+}
+.sidebar__head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.9rem 0.9rem 0.7rem;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+}
+.brand__mark {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 34px; height: 34px;
+  border-radius: 11px;
+  color: var(--accent-ink);
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.2),
+    0 10px 24px -14px var(--accent);
+  transition: transform 0.4s var(--ease);
+}
+.brand:hover .brand__mark { transform: rotate(-8deg) scale(1.06); }
+.brand__mark svg { width: 17px; height: 17px; display: block; }
+.brand__name {
+  font-size: 1.02rem;
+  font-weight: 640;
+  letter-spacing: -0.015em;
+}
+.sidebar__scroll {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.35rem 0.65rem 1rem;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  padding: 0.6rem 0.7rem;
+  border: 0;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 0.885rem;
+  font-weight: 500;
+  text-align: left;
+  transition: background-color 0.18s var(--ease), color 0.18s var(--ease);
+}
+.nav-item svg { width: 16px; height: 16px; flex: 0 0 auto; opacity: 0.85; }
+.nav-item:hover { background: var(--panel); color: var(--text); }
+.nav-item.is-active { background: var(--accent-soft); color: var(--text); }
+.nav-item.is-active svg { color: var(--accent); opacity: 1; }
+
+.nav-item--cta {
+  border: 1px solid var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--text);
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+}
+.nav-item--cta:hover { background: color-mix(in srgb, var(--accent) 20%, transparent); }
+.nav-item--cta svg { color: var(--accent); opacity: 1; }
+
+.nav-group { margin-top: 0.15rem; }
+.nav-group__head {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  border: 0;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--text-faint);
+  font-size: 0.72rem;
+  font-weight: 640;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  transition: color 0.18s var(--ease), background-color 0.18s var(--ease);
+}
+.nav-group__head:hover { color: var(--text-dim); background: var(--panel); }
+.nav-group__head svg {
+  width: 12px; height: 12px;
+  margin-left: auto;
+  transition: transform 0.28s var(--ease);
+}
+.nav-group[data-open="true"] .nav-group__head svg { transform: rotate(90deg); }
+.nav-group__badge {
+  margin-left: 0.15rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 99px;
+  background: var(--panel-2);
+  color: var(--text-faint);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.nav-group__body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.32s var(--ease);
+}
+.nav-group[data-open="true"] .nav-group__body { grid-template-rows: 1fr; }
+.nav-group__inner { overflow: hidden; min-height: 0; }
+.nav-list { display: flex; flex-direction: column; gap: 1px; padding: 0.15rem 0 0.4rem; }
+.nav-list__item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.5rem 0.7rem 0.5rem 1.5rem;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 0.845rem;
+  text-align: left;
+  transition: background-color 0.16s var(--ease), color 0.16s var(--ease);
+}
+.nav-list__item:hover { background: var(--panel); color: var(--text); }
+.nav-list__item.is-active { background: var(--panel-2); color: var(--text); }
+.nav-list__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nav-list__meta { flex: 0 0 auto; font-size: 0.68rem; color: var(--text-faint); }
+.nav-list__del {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 22px; height: 22px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-faint);
+  opacity: 0;
+  transition: opacity 0.16s var(--ease), color 0.16s var(--ease), background-color 0.16s var(--ease);
+}
+.nav-list__del svg { width: 12px; height: 12px; }
+.nav-list__item:hover .nav-list__del { opacity: 1; }
+.nav-list__del:hover { background: rgba(255, 107, 107, 0.16); color: var(--danger); }
+.nav-empty {
+  padding: 0.45rem 0.7rem 0.6rem 1.5rem;
+  font-size: 0.79rem;
+  color: var(--text-faint);
+  font-style: italic;
+}
+.nav-add {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: calc(100% - 0.8rem);
+  margin: 0.1rem 0 0.4rem 0.8rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px dashed var(--border-2);
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-faint);
+  font-size: 0.79rem;
+  transition: color 0.18s var(--ease), border-color 0.18s var(--ease), background-color 0.18s var(--ease);
+}
+.nav-add svg { width: 13px; height: 13px; }
+.nav-add:hover {
+  color: var(--accent);
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+.sidebar__foot {
+  padding: 0.55rem 0.65rem 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+/* ============================================================
+   07. MAIN
+   ============================================================ */
+.main {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  min-width: 0;
+  min-height: 0;
+}
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem clamp(0.8rem, 2vw, 1.4rem);
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg) 72%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  z-index: 20;
+}
+.topbar__title {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.topbar__name {
+  font-size: 0.93rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex: 0 0 auto;
+  padding: 0.24rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  background: var(--panel);
+  color: var(--text-dim);
+  font-size: 0.73rem;
+  font-weight: 550;
+  white-space: nowrap;
+}
+.pill__dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 0 var(--accent-glow);
+  animation: pulse 2.6s var(--ease) infinite;
+}
+.pill.is-thinking .pill__dot {
+  animation-duration: 1s;
+  background: var(--accent-2);
+}
+.pill.is-thinking { color: var(--accent); border-color: var(--accent-line); }
+@keyframes pulse {
+  0%   { box-shadow: 0 0 0 0 var(--accent-glow); }
+  70%  { box-shadow: 0 0 0 6px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+.topbar__actions { display: flex; align-items: center; gap: 0.35rem; }
+
+.icon-btn {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 34px; height: 34px;
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--text-dim);
+  transition:
+    color 0.18s var(--ease),
+    border-color 0.18s var(--ease),
+    background-color 0.18s var(--ease),
+    transform 0.18s var(--ease);
+}
+.icon-btn svg { width: 16px; height: 16px; display: block; }
+.icon-btn:hover {
+  color: var(--text);
+  border-color: var(--border);
+  background: var(--panel);
+}
+.icon-btn:active { transform: scale(0.94); }
+.icon-btn.is-on {
+  color: var(--accent);
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+#toggle-sidebar { display: none; }
+
+/* ============================================================
+   08. CHAT AREA
+   ============================================================ */
+.chat {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.chat__log {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 0.9rem;
+  width: min(100%, 820px);
+  min-height: 100%;
+  margin-inline: auto;
+  padding: clamp(1rem, 3vw, 1.8rem) clamp(0.9rem, 3vw, 1.6rem) 0.6rem;
+}
+.chat__log.is-empty { justify-content: center; }
+
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: 0.9rem;
+  text-align: center;
+  padding-block: clamp(0.5rem, 3vh, 2rem);
+}
+.empty[hidden] { display: none; }
+.empty__mark {
+  display: grid;
+  place-items: center;
+  width: 56px; height: 56px;
+  border-radius: 18px;
+  color: var(--accent-ink);
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  box-shadow: 0 18px 40px -20px var(--accent);
+}
+.empty__mark svg { width: 26px; height: 26px; }
+.empty__title {
+  font-size: clamp(1.6rem, 4.6vw, 2.3rem);
+  font-weight: 640;
+  letter-spacing: -0.028em;
+  line-height: 1.12;
+}
+.empty__sub {
+  max-width: 46ch;
+  color: var(--text-dim);
+  font-size: clamp(0.88rem, 2vw, 0.98rem);
+}
+.grad {
+  background: linear-gradient(100deg, var(--accent), var(--accent-2));
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  justify-content: center;
+  margin-top: 0.3rem;
+  max-width: 560px;
+}
+.chip {
+  padding: 0.48rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  background: var(--panel);
+  color: var(--text-dim);
+  font-size: 0.82rem;
+  transition:
+    color 0.18s var(--ease),
+    border-color 0.18s var(--ease),
+    background-color 0.18s var(--ease),
+    transform 0.18s var(--ease);
+}
+.chip:hover {
+  color: var(--text);
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  transform: translateY(-2px);
+}
+.chip:active { transform: translateY(0) scale(0.97); }
+
+/* Messages */
+.msg { display: flex; gap: 0.65rem; align-items: flex-start; }
+.msg--user { flex-direction: row-reverse; }
+.msg__avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 30px; height: 30px;
+  margin-top: 2px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel-2);
+  color: var(--text-dim);
+}
+.msg__avatar svg { width: 15px; height: 15px; display: block; }
+.msg--bot .msg__avatar {
+  border-color: transparent;
+  color: var(--accent-ink);
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+}
+.msg__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+  max-width: min(84%, 68ch);
+  min-width: 0;
+}
+.msg--user .msg__body { align-items: flex-end; }
+.msg__bubble {
+  padding: 0.7rem 0.95rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  border-top-left-radius: 5px;
+  background: var(--panel-2);
+  overflow-wrap: anywhere;
+  transition: background-color 0.3s var(--ease), border-color 0.3s var(--ease);
+}
+.msg--user .msg__bubble {
+  border-color: var(--accent-line);
+  border-radius: var(--r-lg);
+  border-top-right-radius: 5px;
+  background: var(--accent-soft);
+}
+.msg__text { white-space: pre-wrap; }
+.msg__text code {
+  padding: 0.1em 0.38em;
+  border-radius: 5px;
+  background: var(--panel-3);
+  font-family: var(--font-mono);
+  font-size: 0.87em;
+}
+.msg__text pre {
+  margin: 0.6rem 0;
+  padding: 0.8rem 0.95rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-2);
+  overflow-x: auto;
+}
+.msg__text pre code {
+  padding: 0;
+  background: none;
+  font-size: 0.83rem;
+  line-height: 1.6;
+}
+.msg__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-inline: 0.3rem;
+  font-size: 0.68rem;
+  color: var(--text-faint);
+}
+.msg__copy {
+  border: 0;
+  border-radius: 5px;
+  padding: 0.1rem 0.35rem;
+  background: transparent;
+  color: var(--text-faint);
+  font-size: 0.68rem;
+  opacity: 0;
+  transition: opacity 0.18s var(--ease), color 0.18s var(--ease);
+}
+.msg:hover .msg__copy { opacity: 1; }
+.msg__copy:hover { color: var(--accent); }
+
+.msg--typing .msg__bubble {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  padding: 0.85rem 0.95rem;
+}
+.msg--typing .msg__bubble span {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--text-dim);
+  animation: typing 1.3s var(--ease) infinite;
+}
+.msg--typing .msg__bubble span:nth-child(2) { animation-delay: 0.16s; }
+.msg--typing .msg__bubble span:nth-child(3) { animation-delay: 0.32s; }
+@keyframes typing {
+  0%, 60%, 100% { transform: translateY(0);    opacity: 0.3; }
+  30%           { transform: translateY(-4px); opacity: 1; }
+}
+
+.msg--error .msg__bubble {
+  border-color: rgba(255, 107, 107, 0.45);
+  background: rgba(255, 107, 107, 0.09);
+  color: #ffb3b3;
+}
+:root[data-theme="light"] .msg--error .msg__bubble { color: #a82020; }
+
+.is-entering { animation: msg-in 0.4s var(--ease) both; }
+@keyframes msg-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.99); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Sources block */
+.sources {
+  margin-top: 0.6rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.78rem;
+}
+.sources summary {
+  cursor: pointer;
+  color: var(--text-dim);
+  font-weight: 550;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  user-select: none;
+}
+.sources summary::-webkit-details-marker { display: none; }
+.sources summary::before {
+  content: "";
+  width: 0; height: 0;
+  border-left: 4px solid currentColor;
+  border-top: 3.5px solid transparent;
+  border-bottom: 3.5px solid transparent;
+  transition: transform 0.2s var(--ease);
+  flex: 0 0 auto;
+}
+.sources[open] summary::before { transform: rotate(90deg); }
+.sources summary:hover { color: var(--accent); }
+.sources ol {
+  margin: 0.55rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.sources li { line-height: 1.4; }
+.sources a {
+  color: var(--text-dim);
+  text-decoration: none;
+  display: flex;
+  gap: 0.4rem;
+  align-items: flex-start;
+  transition: color 0.16s var(--ease);
+}
+.sources a:hover { color: var(--accent); }
+.src-idx {
+  flex: 0 0 auto;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  padding-top: 0.05rem;
+}
+
+/* MCP tool badge */
+.mcp-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--border);
+}
+.mcp-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  background: var(--panel);
+  font-size: 0.7rem;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+}
+.mcp-tool svg { width: 10px; height: 10px; color: var(--accent); }
+
+/* ============================================================
+   09. COMPOSER
+   ============================================================ */
+.composer {
+  padding: 0.5rem clamp(0.9rem, 3vw, 1.6rem) max(0.9rem, env(safe-area-inset-bottom));
+}
+.composer__inner { width: min(100%, 820px); margin-inline: auto; }
+
+.modebar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding-bottom: 0.45rem;
+}
+.modebar:empty { display: none; }
+.mode-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.26rem 0.6rem 0.26rem 0.5rem;
+  border: 1px solid var(--accent-line);
+  border-radius: 99px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.73rem;
+  font-weight: 550;
+}
+.mode-tag svg { width: 12px; height: 12px; }
+.mode-tag button {
+  display: grid;
+  place-items: center;
+  width: 14px; height: 14px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  opacity: 0.7;
+}
+.mode-tag button:hover { opacity: 1; background: var(--accent-soft); }
+.mode-tag button svg { width: 9px; height: 9px; }
+
+.attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding-bottom: 0.45rem;
+}
+.attachments:empty { display: none; }
+.attach {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.5rem 0.3rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--panel);
+  font-size: 0.77rem;
+  color: var(--text-dim);
+  max-width: 220px;
+}
+.attach svg { width: 13px; height: 13px; flex: 0 0 auto; color: var(--accent); }
+.attach__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.attach button {
+  display: grid;
+  place-items: center;
+  width: 16px; height: 16px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-faint);
+}
+.attach button:hover { color: var(--danger); background: var(--panel-3); }
+.attach button svg { width: 10px; height: 10px; }
+
+.toolbar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+  gap: 0.35rem;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: color-mix(in srgb, var(--bg-2) 94%, transparent);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: var(--shadow-lg);
+  transform-origin: bottom left;
+}
+.toolbar[hidden] { display: none; }
+.tool {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  padding: 0.55rem 0.6rem;
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
+  background: transparent;
+  text-align: left;
+  transition: background-color 0.16s var(--ease), border-color 0.16s var(--ease);
+}
+.tool:hover { background: var(--panel); }
+.tool.is-on {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+.tool__icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 26px; height: 26px;
+  border-radius: 8px;
+  background: var(--panel-2);
+  color: var(--text-dim);
+  transition: color 0.16s var(--ease), background-color 0.16s var(--ease);
+}
+.tool__icon svg { width: 14px; height: 14px; }
+.tool.is-on .tool__icon { background: var(--accent); color: var(--accent-ink); }
+.tool__text { display: flex; flex-direction: column; gap: 0.05rem; min-width: 0; }
+.tool__label { font-size: 0.83rem; font-weight: 550; color: var(--text); }
+.tool__desc  { font-size: 0.71rem; color: var(--text-faint); line-height: 1.35; }
+.tool.is-on .tool__label { color: var(--accent); }
+
+.composer__bar {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.4rem;
+  padding: 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  background: color-mix(in srgb, var(--bg-2) 78%, transparent);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  transition: border-color 0.25s var(--ease), box-shadow 0.25s var(--ease);
+}
+.composer__bar:focus-within {
+  border-color: var(--accent-line);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
+.composer__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-height: 176px;
+  padding: 0.62rem 0.3rem;
+  border: 0;
+  background: transparent;
+  resize: none;
+  overflow-y: auto;
+  outline: none;
+  line-height: 1.5;
+}
+.composer__input::placeholder { color: var(--text-faint); }
+
+.send-btn {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 38px; height: 38px;
+  border: 0;
+  border-radius: 13px;
+  color: var(--accent-ink);
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  transition: transform 0.18s var(--ease), box-shadow 0.18s var(--ease), opacity 0.18s var(--ease);
+}
+.send-btn svg { width: 17px; height: 17px; display: block; }
+.send-btn:disabled { opacity: 0.28; cursor: not-allowed; }
+.send-btn:not(:disabled):hover { transform: translateY(-2px); box-shadow: 0 10px 24px -12px var(--accent); }
+.send-btn:not(:disabled):active { transform: translateY(0) scale(0.95); }
+
+.composer__hint {
+  padding: 0.45rem 0.4rem 0;
+  font-size: 0.7rem;
+  color: var(--text-faint);
+  text-align: center;
+}
+.composer__hint code {
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+  color: var(--text-dim);
+}
+.link-btn {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font-size: inherit;
+  font-family: inherit;
+}
+
+/* ============================================================
+   10. DIALOGS
+   ============================================================ */
+dialog {
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  background: var(--bg-2);
+  color: var(--text);
+  box-shadow: var(--shadow-lg);
+  max-width: min(92vw, 720px);
+  width: 100%;
+  max-height: 88dvh;
+  overflow: hidden;
+}
+dialog::backdrop {
+  background: rgba(2, 4, 10, 0.62);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+dialog[open] { animation: dlg-in 0.32s var(--ease) both; }
+@keyframes dlg-in {
+  from { opacity: 0; transform: translateY(14px) scale(0.985); }
+  to   { opacity: 1; transform: none; }
+}
+.dlg__head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1rem 1.1rem;
+  border-bottom: 1px solid var(--border);
+}
+.dlg__title { font-size: 1rem; font-weight: 620; flex: 1 1 auto; }
+.dlg__body { overflow-y: auto; max-height: calc(88dvh - 130px); }
+.dlg__foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.85rem 1.1rem;
+  border-top: 1px solid var(--border);
+}
+
+.settings {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  min-height: 400px;
+}
+.settings__rail {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0.75rem 0.6rem;
+  border-right: 1px solid var(--border);
+  background: var(--panel);
+  overflow-y: auto;
+}
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.5rem 0.65rem;
+  border: 0;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 0.845rem;
+  text-align: left;
+  transition: background-color 0.16s var(--ease), color 0.16s var(--ease);
+}
+.tab svg { width: 15px; height: 15px; flex: 0 0 auto; opacity: 0.85; }
+.tab:hover { background: var(--panel-2); color: var(--text); }
+.tab[aria-selected="true"] { background: var(--accent-soft); color: var(--text); font-weight: 560; }
+.tab[aria-selected="true"] svg { color: var(--accent); opacity: 1; }
+.settings__panes { overflow-y: auto; padding: 1.1rem 1.25rem 1.4rem; }
+.pane[hidden] { display: none; }
+.pane__title {
+  font-size: 1.05rem;
+  font-weight: 620;
+  letter-spacing: -0.015em;
+  margin-bottom: 0.2rem;
+}
+.pane__sub {
+  font-size: 0.82rem;
+  color: var(--text-faint);
+  margin-bottom: 1.1rem;
+  max-width: 52ch;
+}
+
+.field { margin-bottom: 1rem; }
+.field__label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.79rem;
+  font-weight: 560;
+  color: var(--text-dim);
+}
+.field__hint {
+  margin-top: 0.32rem;
+  font-size: 0.73rem;
+  color: var(--text-faint);
+  line-height: 1.45;
+}
+.field__hint a { color: var(--accent); text-decoration: none; }
+.field__hint a:hover { text-decoration: underline; }
+.field__hint code {
+  padding: 0.05em 0.32em;
+  border-radius: 4px;
+  background: var(--panel-2);
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+}
+
+.input, .textarea, .select {
+  width: 100%;
+  padding: 0.58rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--panel);
+  color: var(--text);
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.18s var(--ease), box-shadow 0.18s var(--ease), background-color 0.18s var(--ease);
+}
+.input:focus, .textarea:focus, .select:focus {
+  border-color: var(--accent-line);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+  background: var(--panel-2);
+}
+.textarea { resize: vertical; min-height: 86px; line-height: 1.55; }
+.select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5 6 7.5 9 4.5' fill='none' stroke='%238e99b0' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 12px;
+  padding-right: 2rem;
+}
+
+.key-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+.key-row .input { flex: 1 1 auto; }
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.toggle-row:last-child { border-bottom: 0; }
+.toggle-row__text { flex: 1 1 auto; min-width: 0; }
+.toggle-row__label { font-size: 0.875rem; font-weight: 540; }
+.toggle-row__desc { font-size: 0.75rem; color: var(--text-faint); line-height: 1.42; margin-top: 0.1rem; }
+
+.switch {
+  position: relative;
+  flex: 0 0 auto;
+  width: 40px; height: 23px;
+  border: 1px solid var(--border-2);
+  border-radius: 99px;
+  background: var(--panel-2);
+  transition: background-color 0.22s var(--ease), border-color 0.22s var(--ease);
+}
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 17px; height: 17px;
+  border-radius: 50%;
+  background: var(--text-dim);
+  transition: transform 0.24s var(--ease), background-color 0.24s var(--ease);
+}
+.switch[aria-checked="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.switch[aria-checked="true"]::after {
+  transform: translateX(17px);
+  background: var(--accent-ink);
+}
+
+.seg {
+  display: inline-flex;
+  gap: 3px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--panel);
+}
+.seg button {
+  padding: 0.4rem 0.85rem;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  transition: background-color 0.16s var(--ease), color 0.16s var(--ease);
+}
+.seg button:hover { color: var(--text); }
+.seg button[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 560;
+}
+
+.swatches { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.swatch {
+  position: relative;
+  width: 32px; height: 32px;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  background: var(--sw);
+  transition: transform 0.18s var(--ease), border-color 0.18s var(--ease);
+}
+.swatch:hover { transform: scale(1.12); }
+.swatch[aria-pressed="true"] {
+  border-color: var(--text);
+  box-shadow: 0 0 0 2px var(--bg-2) inset;
+}
+.swatch::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+}
+
+.prompt-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.6rem;
+}
+.prompt-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--panel);
+  text-align: left;
+  transition: border-color 0.18s var(--ease), background-color 0.18s var(--ease), transform 0.18s var(--ease);
+}
+.prompt-card:hover {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  transform: translateY(-2px);
+}
+.prompt-card__title { font-size: 0.84rem; font-weight: 580; }
+.prompt-card__body {
+  font-size: 0.75rem;
+  color: var(--text-faint);
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.55rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--panel);
+  color: var(--text);
+  font-size: 0.845rem;
+  font-weight: 550;
+  transition: background-color 0.18s var(--ease), border-color 0.18s var(--ease), transform 0.18s var(--ease);
+}
+.btn svg { width: 15px; height: 15px; }
+.btn:hover { background: var(--panel-2); border-color: var(--border-2); }
+.btn:active { transform: scale(0.98); }
+.btn--primary {
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: var(--accent-ink);
+}
+.btn--primary:hover { filter: brightness(1.06); background: linear-gradient(135deg, var(--accent), var(--accent-2)); }
+.btn--danger { color: var(--danger); border-color: rgba(255, 107, 107, 0.3); }
+.btn--danger:hover { background: rgba(255, 107, 107, 0.1); }
+.btn--sm { padding: 0.4rem 0.7rem; font-size: 0.79rem; white-space: nowrap; }
+
+.emoji-row { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.emoji-opt {
+  width: 34px; height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel);
+  font-size: 1rem;
+  transition: border-color 0.16s var(--ease), background-color 0.16s var(--ease), transform 0.16s var(--ease);
+}
+.emoji-opt:hover { transform: translateY(-2px); }
+.emoji-opt[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.prov-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.73rem;
+  font-weight: 550;
+}
+.prov-status.is-ok    { color: var(--ok); }
+.prov-status.is-error { color: var(--danger); }
+.prov-status.is-busy  { color: var(--text-faint); }
+
+.mcp-tool-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-top: 0.5rem;
+  max-height: 180px;
+  overflow-y: auto;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--panel);
+}
+.mcp-tool-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.4rem;
+  border-radius: var(--r-sm);
+  font-size: 0.76rem;
+}
+.mcp-tool-row:hover { background: var(--panel-2); }
+.mcp-tool-row input { accent-color: var(--accent); }
+.mcp-tool-row code {
+  font-family: var(--font-mono);
+  font-size: 0.73rem;
+  color: var(--accent);
+}
+.mcp-tool-row span {
+  color: var(--text-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ============================================================
+   11. SCRIM
+   ============================================================ */
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 25;
+  background: rgba(2, 4, 10, 0.6);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s var(--ease), visibility 0.3s;
+}
+.scrim.is-open { opacity: 1; visibility: visible; }
+
+/* ============================================================
+   12. RESPONSIVE
+   ============================================================ */
+@media (max-width: 900px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  .sidebar {
+    position: fixed;
+    inset-block: 0;
+    inset-inline-start: 0;
+    width: min(86vw, var(--sidebar-w));
+    transform: translateX(-102%);
+    transition: transform 0.34s var(--ease);
+    box-shadow: var(--shadow-lg);
+  }
+  .sidebar.is-open { transform: none; }
+  #toggle-sidebar { display: grid; }
+  .settings { grid-template-columns: 1fr; }
+  .settings__rail {
+    flex-direction: row;
+    overflow-x: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+    padding: 0.5rem;
+  }
+  .tab { white-space: nowrap; padding: 0.45rem 0.7rem; }
+  .tab span { display: none; }
+  .tab svg { width: 17px; height: 17px; }
+  .settings__panes { max-height: 58dvh; }
+}
+
+@media (max-width: 560px) {
+  body { font-size: 15px; }
+  .msg__avatar { display: none; }
+  .msg__body { max-width: 90%; }
+  .composer { padding-inline: 0.6rem; }
+  .chat__log { padding-inline: 0.7rem; }
+  .toolbar { grid-template-columns: 1fr 1fr; }
+  .tool__desc { display: none; }
+  .composer__hint { display: none; }
+  .topbar { padding-inline: 0.6rem; }
+  .dlg__body { max-height: calc(88dvh - 128px); }
+  .prompt-grid { grid-template-columns: 1fr; }
+  .key-row { flex-wrap: wrap; }
+  .key-row .btn { flex: 1 1 auto; }
+}
+
+@media (min-width: 1400px) {
+  :root { --sidebar-w: 312px; }
+  .chat__log, .composer__inner { width: min(100%, 900px); }
+}
+
+/* ============================================================
+   13. REDUCED MOTION
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .aurora__blob { animation: none; }
+  dialog[open] { animation: none; }
+}
+</style>
+</head>
+
+<body>
+
+<!-- ============================================================
+     SVG SPRITE
+     ============================================================ -->
+<svg class="sprite" aria-hidden="true" focusable="false">
+  <symbol id="i-bolt" viewBox="0 0 24 24">
+    <path d="M12 2 3 14h6l-1 8 12-12h-7l1-8Z" fill="currentColor"/>
+  </symbol>
+  <symbol id="i-send" viewBox="0 0 24 24">
+    <path d="M12 19V5M5.5 11.5 12 5l6.5 6.5" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24">
+    <path d="M12 5v14M5 12h14" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="i-close" viewBox="0 0 24 24">
+    <path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24">
+    <path d="m9 6 6 6-6 6" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24">
+    <path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.8"/>
+    <path d="M12 7.5V12l3 2" fill="none" stroke="currentColor"
+          stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-history" viewBox="0 0 24 24">
+    <path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1M3.5 5v4.5H8" fill="none" stroke="currentColor"
+          stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M12 7.8V12l3 1.8" fill="none" stroke="currentColor"
+          stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-agent" viewBox="0 0 24 24">
+    <rect x="4" y="7.5" width="16" height="11.5" rx="3.2" fill="none"
+          stroke="currentColor" stroke-width="1.8"/>
+    <path d="M12 7.5V4.2M9.5 4.2h5" fill="none" stroke="currentColor"
+          stroke-width="1.8" stroke-linecap="round"/>
+    <circle cx="9" cy="13" r="1.3" fill="currentColor"/>
+    <circle cx="15" cy="13" r="1.3" fill="currentColor"/>
+  </symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24">
+    <path d="M3.5 7.5a2 2 0 0 1 2-2h3.4l1.8 2.2h6.8a2 2 0 0 1 2 2v7.3a2 2 0 0 1-2 2h-12a2 2 0 0 1-2-2Z"
+          fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-library" viewBox="0 0 24 24">
+    <path d="M4 5.5h5v13H4zM10.5 5.5h4v13h-4z" fill="none" stroke="currentColor"
+          stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="m16.8 6 3.2 12.2" fill="none" stroke="currentColor"
+          stroke-width="1.8" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/>
+    <path d="M12 2.8v2.4M12 18.8v2.4M4.5 12H2.1M21.9 12h-2.4M6.7 6.7 5 5M19 19l-1.7-1.7M6.7 17.3 5 19M19 5l-1.7 1.7"
+          fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24">
+    <path d="M5 7h14M10 7V5h4v2M6.5 7l.8 12.2h9.4L17.5 7"
+          fill="none" stroke="currentColor" stroke-width="1.8"
+          stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-file" viewBox="0 0 24 24">
+    <path d="M6.5 3.5h7l4.5 4.5v12.5h-11.5z" fill="none" stroke="currentColor"
+          stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M13.5 3.5V8H18" fill="none" stroke="currentColor"
+          stroke-width="1.8" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24">
+    <path d="M12 16V4.5M7.5 9 12 4.5 16.5 9" fill="none" stroke="currentColor"
+          stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M4.5 15.5v3a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-3"
+          fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="i-brain" viewBox="0 0 24 24">
+    <path d="M9.5 5.2A3 3 0 0 0 4 6.8c0 .8.3 1.5.8 2A2.8 2.8 0 0 0 4 11c0 1 .5 1.9 1.3 2.4A3 3 0 0 0 8 18.5c.6 0 1.1-.2 1.5-.5"
+          fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+    <path d="M14.5 5.2A3 3 0 0 1 20 6.8c0 .8-.3 1.5-.8 2A2.8 2.8 0 0 1 20 11c0 1-.5 1.9-1.3 2.4A3 3 0 0 1 16 18.5c-.6 0-1.1-.2-1.5-.5"
+          fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+    <path d="M12 4.5v15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="i-search" viewBox="0 0 24 24">
+    <circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/>
+    <path d="m16 16 4.5 4.5" fill="none" stroke="currentColor"
+          stroke-width="1.8" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="i-canvas" viewBox="0 0 24 24">
+    <rect x="3.5" y="4.5" width="17" height="13" rx="2.4" fill="none"
+          stroke="currentColor" stroke-width="1.8"/>
+    <path d="M3.5 9.5h17M9 20.5h6" fill="none" stroke="currentColor"
+          stroke-width="1.8" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="i-guide" viewBox="0 0 24 24">
+    <path d="M4.5 5.5h6a2.5 2.5 0 0 1 2.5 2.5v11a2 2 0 0 0-2-2h-6.5z"
+          fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+    <path d="M19.5 5.5h-6A2.5 2.5 0 0 0 11 8v11a2 2 0 0 1 2-2h6.5z"
+          fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-sparkle" viewBox="0 0 24 24">
+    <path d="M12 3.5 13.7 9l5.3 1.7-5.3 1.8L12 18l-1.7-5.5L5 10.7 10.3 9z"
+          fill="currentColor"/>
+  </symbol>
+  <symbol id="i-user" viewBox="0 0 24 24">
+    <circle cx="12" cy="8.5" r="3.6" fill="none" stroke="currentColor" stroke-width="1.8"/>
+    <path d="M4.8 19.5c.7-3.5 3.6-5.5 7.2-5.5s6.5 2 7.2 5.5"
+          fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="i-key" viewBox="0 0 24 24">
+    <circle cx="8" cy="12" r="3.5" fill="none" stroke="currentColor" stroke-width="1.8"/>
+    <path d="M11.5 12H20M17 12v3M14.2 12v2.2" fill="none" stroke="currentColor"
+          stroke-width="1.8" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.7"/>
+    <path d="M3.5 12h17M12 3.5c2.5 2.6 2.5 14.4 0 17M12 3.5c-2.5 2.6-2.5 14.4 0 17"
+          fill="none" stroke="currentColor" stroke-width="1.7"/>
+  </symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24">
+    <path d="M12 3.5 5 6.2v5.4c0 4.2 2.9 7.6 7 8.9 4.1-1.3 7-4.7 7-8.9V6.2z"
+          fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+    <path d="m9.2 12 2 2 3.6-3.8" fill="none" stroke="currentColor"
+          stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-palette" viewBox="0 0 24 24">
+    <path d="M12 3.5a8.5 8.5 0 0 0 0 17c1.3 0 2.2-.9 2.2-2 0-.6-.2-1-.6-1.4-.3-.4-.5-.8-.5-1.3 0-1 .8-1.8 1.9-1.8h1.5a4 4 0 0 0 4-4c0-3.6-3.8-6.5-8.5-6.5Z"
+          fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+    <circle cx="7.8" cy="11.5" r="1.1" fill="currentColor"/>
+    <circle cx="10.5" cy="7.8" r="1.1" fill="currentColor"/>
+    <circle cx="15" cy="8.4" r="1.1" fill="currentColor"/>
+  </symbol>
+  <symbol id="i-book" viewBox="0 0 24 24">
+    <path d="M4.5 5.5A2 2 0 0 1 6.5 3.5H19v15H6.5a2 2 0 0 0-2 2z"
+          fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+    <path d="M4.5 5.5v15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/>
+    <path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"
+          fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24">
+    <path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"
+          fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-check" viewBox="0 0 24 24">
+    <path d="m5.5 12.5 4 4 9-9" fill="none" stroke="currentColor"
+          stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24">
+    <path d="M12 4 3 20h18z" fill="none" stroke="currentColor"
+          stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M12 10v4M12 17h.01" fill="none" stroke="currentColor"
+          stroke-width="1.8" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24">
+    <path d="M2.5 12s3.5-6.5 9.5-6.5S21.5 12 21.5 12s-3.5 6.5-9.5 6.5S2.5 12 2.5 12Z"
+          fill="none" stroke="currentColor" stroke-width="1.7"/>
+    <circle cx="12" cy="12" r="2.6" fill="none" stroke="currentColor" stroke-width="1.7"/>
+  </symbol>
+  <symbol id="i-eye-off" viewBox="0 0 24 24">
+    <path d="M4 4l16 16" fill="none" stroke="currentColor"
+          stroke-width="1.9" stroke-linecap="round"/>
+    <path d="M9.8 6.1A9.5 9.5 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a17 17 0 0 1-3.2 4M6.3 7.8C3.9 9.3 2.5 12 2.5 12s3.5 6.5 9.5 6.5c1.3 0 2.4-.3 3.4-.7"
+          fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="i-server" viewBox="0 0 24 24">
+    <rect x="3.5" y="4" width="17" height="6" rx="1.6" fill="none"
+          stroke="currentColor" stroke-width="1.7"/>
+    <rect x="3.5" y="14" width="17" height="6" rx="1.6" fill="none"
+          stroke="currentColor" stroke-width="1.7"/>
+    <circle cx="7" cy="7" r="1" fill="currentColor"/>
+    <circle cx="7" cy="17" r="1" fill="currentColor"/>
+  </symbol>
+  <symbol id="i-tool" viewBox="0 0 24 24">
+    <path d="M14.5 6.5a4 4 0 0 0 5.3 5.3L21 13l-7.4 7.4a2 2 0 0 1-2.8 0l-1.2-1.2a2 2 0 0 1 0-2.8L16.4 9z"
+          fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+    <path d="M9.5 6.5 6 3 3 6l3.5 3.5" fill="none" stroke="currentColor"
+          stroke-width="1.7" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24">
+    <path d="M20.5 12a8.5 8.5 0 1 1-2.5-6" fill="none" stroke="currentColor"
+          stroke-width="1.9" stroke-linecap="round"/>
+    <path d="M18.5 3.5V7h-3.5" fill="none" stroke="currentColor"
+          stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+</svg>
+
+<!-- ============================================================
+     AMBIENT BACKGROUND
+     ============================================================ -->
+<div class="aurora" aria-hidden="true">
+  <div class="aurora__blob aurora__blob--a"></div>
+  <div class="aurora__blob aurora__blob--b"></div>
+  <div class="aurora__grid"></div>
+</div>
+
+<!-- ============================================================
+     APP
+     ============================================================ -->
+<div class="app">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar" id="sidebar" aria-label="Workspace navigation">
+
+    <div class="sidebar__head">
+      <a class="brand" href="#" id="brand-home" aria-label="Sonic home">
+        <span class="brand__mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><use href="#i-bolt"></use></svg>
+        </span>
+        <span class="brand__name">Sonic</span>
+      </a>
+    </div>
+
+    <div class="sidebar__scroll">
+
+      <button class="nav-item nav-item--cta" id="btn-temp" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-clock"></use></svg>
+        <span>Temporary chat</span>
+      </button>
+
+      <section class="nav-group" data-open="true" data-group="history">
+        <button class="nav-group__head" type="button" aria-expanded="true">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chevron"></use></svg>
+          <span>History</span>
+          <span class="nav-group__badge" id="history-count">0</span>
+        </button>
+        <div class="nav-group__body">
+          <div class="nav-group__inner">
+            <ul class="nav-list" id="history-list"></ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="nav-group" data-open="true" data-group="agents">
+        <button class="nav-group__head" type="button" aria-expanded="true">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chevron"></use></svg>
+          <span>Agents</span>
+          <span class="nav-group__badge" id="agents-count">0</span>
+        </button>
+        <div class="nav-group__body">
+          <div class="nav-group__inner">
+            <ul class="nav-list" id="agents-list"></ul>
+            <button class="nav-add" id="btn-new-agent" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-plus"></use></svg>
+              Create agent
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section class="nav-group" data-open="false" data-group="projects">
+        <button class="nav-group__head" type="button" aria-expanded="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chevron"></use></svg>
+          <span>Projects</span>
+          <span class="nav-group__badge" id="projects-count">0</span>
+        </button>
+        <div class="nav-group__body">
+          <div class="nav-group__inner">
+            <ul class="nav-list" id="projects-list"></ul>
+            <button class="nav-add" id="btn-new-project" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-plus"></use></svg>
+              New project
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section class="nav-group" data-open="false" data-group="library">
+        <button class="nav-group__head" type="button" aria-expanded="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chevron"></use></svg>
+          <span>Library</span>
+          <span class="nav-group__badge" id="library-count">0</span>
+        </button>
+        <div class="nav-group__body">
+          <div class="nav-group__inner">
+            <ul class="nav-list" id="library-list"></ul>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <div class="sidebar__foot">
+      <button class="nav-item" id="btn-settings" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-settings"></use></svg>
+        <span>Settings</span>
+      </button>
+    </div>
+
+  </aside>
+
+  <div class="scrim" id="scrim" hidden></div>
+
+  <!-- ============ MAIN ============ -->
+  <div class="main">
+
+    <header class="topbar">
+      <button class="icon-btn" id="toggle-sidebar" type="button"
+              aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-menu"></use></svg>
+      </button>
+
+      <div class="topbar__title">
+        <span class="topbar__name" id="chat-title">New chat</span>
+        <span class="pill" id="agent-pill">
+          <span aria-hidden="true">⚡</span>
+          <span id="agent-pill-text">Sonic</span>
+        </span>
+      </div>
+
+      <div class="topbar__actions">
+        <span class="pill" id="status-pill" role="status" aria-live="polite">
+          <span class="pill__dot" aria-hidden="true"></span>
+          <span id="status-text">Ready</span>
+        </span>
+
+        <button class="icon-btn" id="btn-theme" type="button"
+                aria-label="Toggle light and dark theme" title="Toggle theme">
+          <svg viewBox="0 0 24 24" aria-hidden="true" id="theme-icon">
+            <use href="#i-moon"></use>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="chat" id="chat" role="log" aria-live="polite"
+         aria-label="Conversation" aria-busy="false">
+      <div class="chat__log is-empty" id="log">
+
+        <section class="empty" id="empty" aria-label="Welcome">
+          <span class="empty__mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><use href="#i-bolt"></use></svg>
+          </span>
+          <h1 class="empty__title">How can I help, today?</h1>
+          <p class="empty__sub">
+            Ask anything, attach a file, or switch on a mode below.
+            Add your Groq and MCP keys in Settings to go live.
+          </p>
+          <div class="chips" id="chips">
+            <button class="chip" type="button" data-prompt="Explain how HTTP caching works, simply.">Explain HTTP caching</button>
+            <button class="chip" type="button" data-prompt="What's the latest news about SpaceX?">Latest SpaceX news</button>
+            <button class="chip" type="button" data-prompt="Write a haiku about clean code.">Write a haiku</button>
+            <button class="chip" type="button" data-prompt="Give me a 3-step plan to learn CSS Grid.">Learn CSS Grid</button>
+          </div>
+        </section>
+
+      </div>
+    </div>
+
+    <footer class="composer">
+      <div class="composer__inner">
+
+        <div class="modebar" id="modebar" aria-label="Active modes"></div>
+        <div class="attachments" id="attachments" aria-label="Attached files"></div>
+
+        <div class="toolbar" id="toolbar" hidden role="group" aria-label="Input tools">
+          <button class="tool" type="button" data-tool="upload">
+            <span class="tool__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><use href="#i-upload"></use></svg>
+            </span>
+            <span class="tool__text">
+              <span class="tool__label">Upload files</span>
+              <span class="tool__desc">Documents, PDFs, images</span>
+            </span>
+          </button>
+
+          <button class="tool" type="button" data-tool="deepThinking" aria-pressed="false">
+            <span class="tool__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><use href="#i-brain"></use></svg>
+            </span>
+            <span class="tool__text">
+              <span class="tool__label">Deep thinking</span>
+              <span class="tool__desc">Multi-step reasoning</span>
+            </span>
+          </button>
+
+          <button class="tool" type="button" data-tool="deepResearch" aria-pressed="false">
+            <span class="tool__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><use href="#i-search"></use></svg>
+            </span>
+            <span class="tool__text">
+              <span class="tool__label">Deep research</span>
+              <span class="tool__desc">Multi-source reports</span>
+            </span>
+          </button>
+
+          <button class="tool" type="button" data-tool="webSearch" aria-pressed="false">
+            <span class="tool__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><use href="#i-globe"></use></svg>
+            </span>
+            <span class="tool__text">
+              <span class="tool__label">Web search</span>
+              <span class="tool__desc">Real-time lookups</span>
+            </span>
+          </button>
+
+          <button class="tool" type="button" data-tool="canvas" aria-pressed="false">
+            <span class="tool__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><use href="#i-canvas"></use></svg>
+            </span>
+            <span class="tool__text">
+              <span class="tool__label">Canvas</span>
+              <span class="tool__desc">Code &amp; writing space</span>
+            </span>
+          </button>
+
+          <button class="tool" type="button" data-tool="guideLearning" aria-pressed="false">
+            <span class="tool__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><use href="#i-guide"></use></svg>
+            </span>
+            <span class="tool__text">
+              <span class="tool__label">Guided learning</span>
+              <span class="tool__desc">Step-by-step teaching</span>
+            </span>
+          </button>
+
+          <button class="tool" type="button" data-tool="personalIntelligence" aria-pressed="false">
+            <span class="tool__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><use href="#i-sparkle"></use></svg>
+            </span>
+            <span class="tool__text">
+              <span class="tool__label">Personal intelligence</span>
+              <span class="tool__desc">Use your context</span>
+            </span>
+          </button>
+        </div>
+
+        <form class="composer__bar" id="form" autocomplete="off" novalidate>
+          <button class="icon-btn" id="btn-tools" type="button"
+                  aria-label="Open tools" aria-expanded="false" aria-controls="toolbar">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-plus"></use></svg>
+          </button>
+
+          <label class="sr-only" for="input">Message Sonic</label>
+          <textarea class="composer__input" id="input" name="message" rows="1"
+                    maxlength="8000" placeholder="Message Sonic…"
+                    enterkeyhint="send"></textarea>
+
+          <button class="send-btn" id="send" type="submit"
+                  aria-label="Send message" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-send"></use></svg>
+          </button>
+        </form>
+
+        <p class="composer__hint" id="hint">
+          Add your Groq and MCP keys in
+          <button type="button" class="link-btn" id="hint-settings">Settings</button>
+          to connect live models and real-time tools.
+        </p>
+
+        <input type="file" id="file-input" multiple hidden
+               accept=".txt,.md,.json,.csv,.js,.ts,.html,.css,.pdf,image/*" />
+      </div>
+    </footer>
+
+  </div>
+</div>
+
+<!-- ============================================================
+     SETTINGS DIALOG
+     ============================================================ -->
+<dialog id="dlg-settings" aria-labelledby="dlg-settings-title">
+  <div class="dlg__head">
+    <h2 class="dlg__title" id="dlg-settings-title">Settings</h2>
+    <button class="icon-btn" type="button" data-close aria-label="Close settings">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-close"></use></svg>
+    </button>
+  </div>
+
+  <div class="settings">
+    <div class="settings__rail" role="tablist" aria-label="Settings sections">
+      <button class="tab" role="tab" data-tab="profile" aria-selected="true">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-user"></use></svg>
+        <span>Profile</span>
+      </button>
+      <button class="tab" role="tab" data-tab="api" aria-selected="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-key"></use></svg>
+        <span>API</span>
+      </button>
+      <button class="tab" role="tab" data-tab="language" aria-selected="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-globe"></use></svg>
+        <span>Language</span>
+      </button>
+      <button class="tab" role="tab" data-tab="memory" aria-selected="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-brain"></use></svg>
+        <span>Memory</span>
+      </button>
+      <button class="tab" role="tab" data-tab="personal" aria-selected="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-sparkle"></use></svg>
+        <span>Personalization</span>
+      </button>
+      <button class="tab" role="tab" data-tab="intel" aria-selected="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-shield"></use></svg>
+        <span>Intelligence</span>
+      </button>
+      <button class="tab" role="tab" data-tab="appearance" aria-selected="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-palette"></use></svg>
+        <span>Appearance</span>
+      </button>
+      <button class="tab" role="tab" data-tab="prompts" aria-selected="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-book"></use></svg>
+        <span>Prompt store</span>
+      </button>
+    </div>
+
+    <div class="settings__panes">
+
+      <!-- PROFILE -->
+      <section class="pane" role="tabpanel" data-pane="profile">
+        <h3 class="pane__title">Profile</h3>
+        <p class="pane__sub">Your name is used in the sidebar greeting and in personalization context.</p>
+
+        <div class="field">
+          <label class="field__label" for="set-name">Display name</label>
+          <input class="input" id="set-name" type="text" placeholder="e.g. Alex" maxlength="60" />
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="set-email">Email (optional)</label>
+          <input class="input" id="set-email" type="email" placeholder="you@example.com" maxlength="120" />
+          <p class="field__hint">Stored locally only. Never sent anywhere except your own API requests.</p>
+        </div>
+      </section>
+
+      <!-- API -->
+      <section class="pane" role="tabpanel" data-pane="api" hidden>
+        <h3 class="pane__title">API configuration</h3>
+        <p class="pane__sub">
+          Connect your keys to enable live model responses and real-time tools.
+          Everything is stored locally in your browser.
+        </p>
+
+        <!-- Groq -->
+        <div class="field">
+          <label class="field__label" for="set-key">Groq API key — chat model</label>
+          <div class="key-row">
+            <input class="input" id="set-key" type="password"
+                   placeholder="gsk_…" autocomplete="off" spellcheck="false" />
+            <button class="btn btn--sm" id="btn-toggle-groq" type="button">Show</button>
+            <button class="btn btn--sm" id="btn-test-groq" type="button">Test</button>
+          </div>
+          <p class="field__hint">
+            Get one at
+            <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer">console.groq.com</a>.
+            <span class="prov-status" id="groq-status"></span>
+          </p>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="set-model">Groq model</label>
+          <select class="select" id="set-model">
+            <option value="openai/gpt-oss-20b">openai/gpt-oss-20b</option>
+            <option value="openai/gpt-oss-120b">openai/gpt-oss-120b</option>
+            <option value="llama-3.3-70b-versatile">llama-3.3-70b-versatile</option>
+            <option value="llama-3.1-8b-instant">llama-3.1-8b-instant</option>
+            <option value="meta-llama/llama-4-scout-17b-16e-instruct">meta-llama/llama-4-scout-17b-16e-instruct</option>
+            <option value="qwen/qwen3-32b">qwen/qwen3-32b</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="set-temp">
+            Temperature — <span id="temp-out">0.7</span>
+          </label>
+          <input class="input" id="set-temp" type="range" min="0" max="1.5" step="0.05" value="0.7"
+                 style="padding:0;border:0;background:transparent;" />
+          <p class="field__hint">Lower is more focused; higher is more creative.</p>
+        </div>
+
+        <hr style="border:0;border-top:1px solid var(--border);margin:1.4rem 0;" />
+
+        <!-- Search / tools -->
+        <div class="field">
+          <label class="field__label" for="set-search">Search / tools provider</label>
+          <select class="select" id="set-search">
+            <option value="none">None — web search disabled</option>
+            <option value="mcp">MCP server — Model Context Protocol</option>
+            <option value="cohere">Cohere — built-in web search</option>
+            <option value="tavily">Tavily — AI-optimised search</option>
+            <option value="wikipedia">Wikipedia — free, no key</option>
+          </select>
+          <p class="field__hint">
+            Groq's API has no built-in search tool, so live results come from a separate provider.
+            MCP connects to a Model Context Protocol server that exposes tools.
+          </p>
+        </div>
+
+        <!-- ---------- MCP ---------- -->
+        <div id="mcp-fields" hidden>
+          <div class="field">
+            <label class="field__label" for="set-mcp-url">MCP server URL</label>
+            <div class="key-row">
+              <input class="input" id="set-mcp-url" type="url"
+                     placeholder="https://your-mcp-server.com/mcp"
+                     autocomplete="off" spellcheck="false" />
+            </div>
+            <p class="field__hint">
+              Streamable HTTP or SSE endpoint. Example hosted servers:
+              <a href="https://github.com/modelcontextprotocol/servers" target="_blank" rel="noopener noreferrer">modelcontextprotocol/servers</a>
+            </p>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="set-mcp-key">MCP API key (optional)</label>
+            <div class="key-row">
+              <input class="input" id="set-mcp-key" type="password"
+                     placeholder="Bearer token or API key…"
+                     autocomplete="off" spellcheck="false" />
+              <button class="btn btn--sm" id="btn-toggle-mcp" type="button">Show</button>
+            </div>
+            <p class="field__hint">
+              Sent as <code>Authorization: Bearer …</code> on every MCP request.
+            </p>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="set-mcp-tool">Tool to use for search</label>
+            <div class="key-row">
+              <select class="select" id="set-mcp-tool">
+                <option value="">Auto — use the first discovered tool</option>
+              </select>
+              <button class="btn btn--sm" id="btn-refresh-mcp" type="button" title="Refresh tool list">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-refresh"></use></svg>
+                Refresh
+              </button>
+            </div>
+            <p class="field__hint">
+              Connect first, then pick a tool. Tools are discovered via <code>tools/list</code>.
+            </p>
+          </div>
+
+          <div class="field">
+            <button class="btn btn--sm btn--primary" id="btn-test-mcp" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-server"></use></svg>
+              Connect &amp; discover tools
+            </button>
+            <span class="prov-status" id="mcp-status"></span>
+            <div class="mcp-tool-list" id="mcp-tool-list" hidden></div>
+          </div>
+        </div>
+
+        <!-- Cohere -->
+        <div class="field" id="cohere-key-field" hidden>
+          <label class="field__label" for="set-cohere-key">Cohere API key</label>
+          <div class="key-row">
+            <input class="input" id="set-cohere-key" type="password"
+                   placeholder="Paste your Cohere key…" autocomplete="off" spellcheck="false" />
+            <button class="btn btn--sm" id="btn-toggle-cohere" type="button">Show</button>
+            <button class="btn btn--sm" id="btn-test-cohere" type="button">Test</button>
+          </div>
+          <p class="field__hint">
+            Free trial at
+            <a href="https://dashboard.cohere.com/api-keys" target="_blank" rel="noopener noreferrer">dashboard.cohere.com</a>.
+            <span class="prov-status" id="cohere-status"></span>
+          </p>
+        </div>
+
+        <!-- Tavily -->
+        <div class="field" id="search-key-field" hidden>
+          <label class="field__label" for="set-search-key">Tavily API key</label>
+          <div class="key-row">
+            <input class="input" id="set-search-key" type="password"
+                   placeholder="tvly-…" autocomplete="off" spellcheck="false" />
+            <button class="btn btn--sm" id="btn-toggle-tavily" type="button">Show</button>
+            <button class="btn btn--sm" id="btn-test-tavily" type="button">Test</button>
+          </div>
+          <p class="field__hint">
+            Free tier at
+            <a href="https://tavily.com" target="_blank" rel="noopener noreferrer">tavily.com</a>
+            — 1,000 searches/month.
+            <span class="prov-status" id="tavily-status"></span>
+          </p>
+        </div>
+
+      </section>
+
+      <!-- LANGUAGE -->
+      <section class="pane" role="tabpanel" data-pane="language" hidden>
+        <h3 class="pane__title">Language</h3>
+        <p class="pane__sub">Sets the interface language and instructs the model to reply in the same language.</p>
+
+        <div class="field">
+          <label class="field__label" for="set-lang">Response language</label>
+          <select class="select" id="set-lang">
+            <option value="auto">Auto — match my message</option>
+            <option value="en">English</option>
+            <option value="es">Español</option>
+            <option value="fr">Français</option>
+            <option value="de">Deutsch</option>
+            <option value="pt">Português</option>
+            <option value="it">Italiano</option>
+            <option value="hi">हिन्दी</option>
+            <option value="bn">বাংলা</option>
+            <option value="ar">العربية</option>
+            <option value="ja">日本語</option>
+            <option value="zh">中文</option>
+            <option value="ko">한국어</option>
+          </select>
+        </div>
+      </section>
+
+      <!-- MEMORY -->
+      <section class="pane" role="tabpanel" data-pane="memory" hidden>
+        <h3 class="pane__title">Memory</h3>
+        <p class="pane__sub">Control whether Sonic carries context across separate conversations.</p>
+
+        <div class="toggle-row">
+          <div class="toggle-row__text">
+            <div class="toggle-row__label">Global memory</div>
+            <div class="toggle-row__desc">
+              When on, past chats contribute to the context window. Temporary chats are always excluded.
+            </div>
+          </div>
+          <button class="switch" role="switch" aria-checked="true" data-setting="memory"
+                  aria-label="Global memory"></button>
+        </div>
+
+        <div class="field" style="margin-top:1rem;">
+          <button class="btn btn--sm btn--danger" id="btn-clear-all" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-trash"></use></svg>
+            Clear all local data
+          </button>
+          <p class="field__hint">Removes chats, agents, projects, library entries, prompts and settings.</p>
+        </div>
+      </section>
+
+      <!-- PERSONALIZATION -->
+      <section class="pane" role="tabpanel" data-pane="personal" hidden>
+        <h3 class="pane__title">Personalization</h3>
+        <p class="pane__sub">Shape tone and style based on how you like to work.</p>
+
+        <div class="toggle-row">
+          <div class="toggle-row__text">
+            <div class="toggle-row__label">Adapt to my style</div>
+            <div class="toggle-row__desc">Adjust verbosity and formatting based on your usual preferences.</div>
+          </div>
+          <button class="switch" role="switch" aria-checked="true" data-setting="personalization"
+                  aria-label="Adapt to my style"></button>
+        </div>
+
+        <div class="field" style="margin-top:1rem;">
+          <label class="field__label" for="set-tone">Preferred tone</label>
+          <select class="select" id="set-tone">
+            <option value="balanced">Balanced</option>
+            <option value="concise">Concise — short answers</option>
+            <option value="detailed">Detailed — thorough answers</option>
+            <option value="friendly">Friendly and warm</option>
+            <option value="formal">Formal and professional</option>
+          </select>
+        </div>
+      </section>
+
+      <!-- PERSONAL INTELLIGENCE -->
+      <section class="pane" role="tabpanel" data-pane="intel" hidden>
+        <h3 class="pane__title">Personal intelligence &amp; info</h3>
+        <p class="pane__sub">Manage the background context Sonic may use for smarter answers.</p>
+
+        <div class="toggle-row">
+          <div class="toggle-row__text">
+            <div class="toggle-row__label">Use my background context</div>
+            <div class="toggle-row__desc">Allows profile details and recent activity to inform responses.</div>
+          </div>
+          <button class="switch" role="switch" aria-checked="false" data-setting="personalIntelligence"
+                  aria-label="Use my background context"></button>
+        </div>
+
+        <div class="field" style="margin-top:1rem;">
+          <label class="field__label" for="set-context">Background context</label>
+          <textarea class="textarea" id="set-context"
+            placeholder="e.g. I'm a frontend developer working mostly in vanilla JS. Prefer concise answers with code examples."
+            maxlength="1200"></textarea>
+          <p class="field__hint">Included as system context when personal intelligence is enabled.</p>
+        </div>
+      </section>
+
+      <!-- APPEARANCE -->
+      <section class="pane" role="tabpanel" data-pane="appearance" hidden>
+        <h3 class="pane__title">Appearance</h3>
+        <p class="pane__sub">Theme mode and accent color.</p>
+
+        <div class="field">
+          <span class="field__label">Theme mode</span>
+          <div class="seg" id="seg-theme" role="group" aria-label="Theme mode">
+            <button type="button" data-theme-value="dark">Dark</button>
+            <button type="button" data-theme-value="light">Light</button>
+            <button type="button" data-theme-value="system">System</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="field__label">Accent color</span>
+          <div class="swatches" id="swatches" role="group" aria-label="Accent color">
+            <button class="swatch" type="button" data-accent-value="red"
+                    style="--sw:#ff5c5c" aria-label="Red" aria-pressed="false"></button>
+            <button class="swatch" type="button" data-accent-value="orange"
+                    style="--sw:#ff9f43" aria-label="Orange" aria-pressed="false"></button>
+            <button class="swatch" type="button" data-accent-value="yellow"
+                    style="--sw:#ffd93d" aria-label="Yellow" aria-pressed="false"></button>
+            <button class="swatch" type="button" data-accent-value="green"
+                    style="--sw:#4ade80" aria-label="Green" aria-pressed="false"></button>
+            <button class="swatch" type="button" data-accent-value="blue"
+                    style="--sw:#6d8bff" aria-label="Blue" aria-pressed="false"></button>
+            <button class="swatch" type="button" data-accent-value="teal"
+                    style="--sw:#46e6c8" aria-label="Teal" aria-pressed="false"></button>
+            <button class="swatch" type="button" data-accent-value="purple"
+                    style="--sw:#b06cff" aria-label="Purple" aria-pressed="false"></button>
+            <button class="swatch" type="button" data-accent-value="white"
+                    style="--sw:#e9edf7" aria-label="White" aria-pressed="false"></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- PROMPT STORE -->
+      <section class="pane" role="tabpanel" data-pane="prompts" hidden>
+        <h3 class="pane__title">Prompt store</h3>
+        <p class="pane__sub">Saved prompt templates. Click one to drop it into the composer.</p>
+
+        <div class="field">
+          <label class="field__label" for="set-prompt-title">New prompt title</label>
+          <input class="input" id="set-prompt-title" type="text" placeholder="e.g. Code review" maxlength="60" />
+        </div>
+        <div class="field">
+          <label class="field__label" for="set-prompt-body">Prompt body</label>
+          <textarea class="textarea" id="set-prompt-body"
+            placeholder="Review the following code for correctness, edge cases, and readability…"
+            maxlength="1200"></textarea>
+        </div>
+        <div class="field">
+          <button class="btn btn--sm btn--primary" id="btn-save-prompt" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-plus"></use></svg>
+            Save prompt
+          </button>
+        </div>
+
+        <div class="prompt-grid" id="prompt-grid" style="margin-top:1rem;"></div>
+      </section>
+
+    </div>
+  </div>
+</dialog>
+
+<!-- ============================================================
+     AGENT DIALOG
+     ============================================================ -->
+<dialog id="dlg-agent" aria-labelledby="dlg-agent-title">
+  <div class="dlg__head">
+    <h2 class="dlg__title" id="dlg-agent-title">Create agent</h2>
+    <button class="icon-btn" type="button" data-close aria-label="Close">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-close"></use></svg>
+    </button>
+  </div>
+
+  <div class="dlg__body" style="padding:1.1rem 1.25rem;">
+    <div class="field">
+      <label class="field__label" for="agent-name">Name</label>
+      <input class="input" id="agent-name" type="text" placeholder="e.g. Code Reviewer" maxlength="40" />
+    </div>
+
+    <div class="field">
+      <span class="field__label">Icon</span>
+      <div class="emoji-row" id="emoji-row"></div>
+    </div>
+
+    <div class="field">
+      <label class="field__label" for="agent-instructions">Instructions</label>
+      <textarea class="textarea" id="agent-instructions" rows="5"
+        placeholder="You are a meticulous code reviewer. Focus on correctness, edge cases, and readability. Be direct and specific."
+        maxlength="2000"></textarea>
+      <p class="field__hint">Sent as the system prompt whenever this agent is active.</p>
+    </div>
+  </div>
+
+  <div class="dlg__foot">
+    <button class="btn" type="button" data-close>Cancel</button>
+    <button class="btn btn--primary" id="btn-save-agent" type="button">Create agent</button>
+  </div>
+</dialog>
+
+<!-- ============================================================
+     PROJECT DIALOG
+     ============================================================ -->
+<dialog id="dlg-project" aria-labelledby="dlg-project-title">
+  <div class="dlg__head">
+    <h2 class="dlg__title" id="dlg-project-title">New project</h2>
+    <button class="icon-btn" type="button" data-close aria-label="Close">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-close"></use></svg>
+    </button>
+  </div>
+
+  <div class="dlg__body" style="padding:1.1rem 1.25rem;">
+    <div class="field">
+      <label class="field__label" for="project-name">Project name</label>
+      <input class="input" id="project-name" type="text" placeholder="e.g. Landing page redesign" maxlength="60" />
+    </div>
+    <div class="field">
+      <label class="field__label" for="project-desc">Description (optional)</label>
+      <textarea class="textarea" id="project-desc" rows="3"
+        placeholder="What is this project about?" maxlength="400"></textarea>
+    </div>
+  </div>
+
+  <div class="dlg__foot">
+    <button class="btn" type="button" data-close>Cancel</button>
+    <button class="btn btn--primary" id="btn-save-project" type="button">Create project</button>
+  </div>
+</dialog>
+
+<!-- ============================================================
+     SCRIPTS
+     ============================================================ -->
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js" defer></script>
+
+<script defer>
+(() => {
+  'use strict';
+
+  /* ==========================================================
+     01. SHORTHANDS
+     ========================================================== */
+  const $  = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+
+  const el = (tag, cls, text) => {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  };
+
+  const svgUse = (id, cls = '') =>
+    `<svg viewBox="0 0 24 24" class="${cls}" aria-hidden="true"><use href="#${id}"></use></svg>`;
+
+  const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+
+  const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
+
+  const escapeHtml = (str) =>
+    String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+
+  const STORAGE_KEY    = 'sonic.workspace.v3';
+  const GROQ_ENDPOINT  = 'https://api.groq.com/openai/v1/chat/completions';
+  const COHERE_ENDPOINT= 'https://api.cohere.com/v2/chat';
+  const TAVILY_ENDPOINT= 'https://api.tavily.com/search';
+  const MAX_INPUT_PX   = 176;
+  const REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const LANG_NAMES = {
+    en: 'English', es: 'Spanish', fr: 'French', de: 'German', pt: 'Portuguese',
+    it: 'Italian', hi: 'Hindi', bn: 'Bengali', ar: 'Arabic', ja: 'Japanese',
+    zh: 'Chinese', ko: 'Korean'
+  };
+
+  const EMOJI_CHOICES = ['⚡','🧠','🎨','📚','🔬','💻','✍️','🧭','🎯','🛠️','🌱','🔮'];
+
+  const DEFAULT_PROMPTS = [
+    { id: uid(), title: 'Explain simply', body: 'Explain the following concept in plain language, as if teaching a beginner. Use one concrete analogy.\n\nConcept: ' },
+    { id: uid(), title: 'Code review',    body: 'Review the following code for correctness, edge cases, readability, and performance. List issues by severity, then show a corrected version.\n\nCode:\n' },
+    { id: uid(), title: 'Summarize',      body: 'Summarize the following text in 5 bullet points, then give a one-sentence takeaway.\n\nText:\n' },
+    { id: uid(), title: 'Debug this',     body: 'Here is a bug report and the relevant code. Identify the root cause, explain why it happens, and give the minimal fix.\n\n' },
+    { id: uid(), title: 'Write a plan',   body: 'Create a step-by-step plan for the following goal. Include milestones, risks, and what "done" looks like.\n\nGoal: ' },
+    { id: uid(), title: 'Improve writing',body: 'Rewrite the following text to be clearer and more concise without losing meaning. Then list what you changed and why.\n\nText:\n' }
+  ];
+
+  /* ==========================================================
+     02. STATE
+     ========================================================== */
+  const defaultSettings = {
+    theme: 'dark',
+    accent: 'teal',
+    apiKey: '',
+    model: 'openai/gpt-oss-20b',
+    temperature: 0.7,
+    language: 'auto',
+    memory: true,
+    personalization: true,
+    personalIntelligence: false,
+    tone: 'balanced',
+    context: '',
+    profile: { name: '', email: '' },
+    searchProvider: 'none',
+    searchApiKey: '',
+    cohereApiKey: '',
+    mcpUrl: '',
+    mcpApiKey: '',
+    mcpToolName: ''
+  };
+
+  const store = {
+    chats: [],
+    agents: [],
+    projects: [],
+    library: [],
+    prompts: [],
+    settings: { ...defaultSettings },
+    activeChatId: null,
+    activeAgentId: null,
+    tempChat: null
+  };
+
+  const modes = {
+    deepThinking: false,
+    deepResearch: false,
+    webSearch: false,
+    canvas: false,
+    guideLearning: false,
+    personalIntelligence: false
+  };
+
+  const MODE_META = {
+    deepThinking:         { label: 'Deep thinking',  icon: 'i-brain' },
+    deepResearch:         { label: 'Deep research',  icon: 'i-search' },
+    webSearch:            { label: 'Web search',     icon: 'i-globe' },
+    canvas:               { label: 'Canvas',         icon: 'i-canvas' },
+    guideLearning:        { label: 'Guided learning',icon: 'i-guide' },
+    personalIntelligence: { label: 'Personal intel', icon: 'i-sparkle' }
+  };
+
+  let pendingAttachments = [];
+  let isSending = false;
+  let abortController = null;
+
+  const BUILTIN_AGENT = {
+    id: 'builtin-sonic',
+    name: 'Sonic',
+    emoji: '⚡',
+    instructions: 'You are Sonic, a concise and precise AI assistant. Prefer clear, well-structured answers. Use markdown when it helps readability. Never invent facts — say when you are unsure.',
+    builtin: true
+  };
+
+  /* ==========================================================
+     03. DOM REFS
+     ========================================================== */
+  const dom = {
+    html:        document.documentElement,
+    sidebar:     $('#sidebar'),
+    scrim:       $('#scrim'),
+    toggleSide:  $('#toggle-sidebar'),
+    log:         $('#log'),
+    chat:        $('#chat'),
+    empty:       $('#empty'),
+    chips:       $('#chips'),
+    form:        $('#form'),
+    input:       $('#input'),
+    send:        $('#send'),
+    hint:        $('#hint'),
+    hintSettings:$('#hint-settings'),
+    btnTools:    $('#btn-tools'),
+    toolbar:     $('#toolbar'),
+    modebar:     $('#modebar'),
+    attachments: $('#attachments'),
+    fileInput:   $('#file-input'),
+    chatTitle:   $('#chat-title'),
+    agentPill:   $('#agent-pill'),
+    agentPillTx: $('#agent-pill-text'),
+    statusPill:  $('#status-pill'),
+    statusText:  $('#status-text'),
+    themeBtn:    $('#btn-theme'),
+    themeIcon:   $('#theme-icon'),
+    btnTemp:     $('#btn-temp'),
+    btnNewAgent: $('#btn-new-agent'),
+    btnNewProj:  $('#btn-new-project'),
+    btnSettings: $('#btn-settings'),
+    historyList: $('#history-list'),
+    agentsList:  $('#agents-list'),
+    projectsList:$('#projects-list'),
+    libraryList: $('#library-list'),
+    historyCount:$('#history-count'),
+    agentsCount: $('#agents-count'),
+    projectsCount:$('#projects-count'),
+    libraryCount:$('#library-count'),
+    dlgSettings: $('#dlg-settings'),
+    dlgAgent:    $('#dlg-agent'),
+    dlgProject:  $('#dlg-project'),
+    promptGrid:  $('#prompt-grid')
+  };
+
+  /* ==========================================================
+     04. PERSISTENCE
+     ========================================================== */
+  function save() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        chats: store.chats,
+        agents: store.agents,
+        projects: store.projects,
+        library: store.library,
+        prompts: store.prompts,
+        settings: store.settings,
+        activeChatId: store.activeChatId,
+        activeAgentId: store.activeAgentId
+      }));
+    } catch { /* quota / private mode — degrade silently */ }
+  }
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return false;
+      const data = JSON.parse(raw);
+
+      if (Array.isArray(data.chats))    store.chats    = data.chats;
+      if (Array.isArray(data.agents))   store.agents   = data.agents;
+      if (Array.isArray(data.projects)) store.projects = data.projects;
+      if (Array.isArray(data.library))  store.library  = data.library;
+      if (Array.isArray(data.prompts))  store.prompts  = data.prompts;
+      if (data.settings) store.settings = { ...defaultSettings, ...data.settings };
+      if (data.activeChatId) store.activeChatId = data.activeChatId;
+      if (data.activeAgentId) store.activeAgentId = data.activeAgentId;
+
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /* ==========================================================
+     05. THEME
+     ========================================================== */
+  const systemLight = window.matchMedia('(prefers-color-scheme: light)');
+
+  function resolveTheme(pref) {
+    if (pref === 'system') return systemLight.matches ? 'light' : 'dark';
+    return pref;
+  }
+
+  function applyTheme() {
+    const resolved = resolveTheme(store.settings.theme);
+    dom.html.dataset.theme  = resolved;
+    dom.html.dataset.accent = store.settings.accent;
+
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) {
+      meta.setAttribute('content', resolved === 'light' ? '#f4f6fb' : '#06080f');
+    }
+
+    dom.themeIcon.innerHTML =
+      `<use href="#${resolved === 'dark' ? 'i-sun' : 'i-moon'}"></use>`;
+
+    $$('#seg-theme button').forEach((b) => {
+      b.setAttribute('aria-pressed', String(b.dataset.themeValue === store.settings.theme));
+    });
+
+    $$('#swatches .swatch').forEach((b) => {
+      b.setAttribute('aria-pressed', String(b.dataset.accentValue === store.settings.accent));
+    });
+  }
+
+  systemLight.addEventListener('change', () => {
+    if (store.settings.theme === 'system') applyTheme();
+  });
+
+  /* ==========================================================
+     06. SIDEBAR RENDERING
+     ========================================================== */
+  function renderHistory() {
+    const list = dom.historyList;
+    list.innerHTML = '';
+
+    const chats = [...store.chats]
+      .filter((c) => !c.temporary)
+      .sort((a, b) => b.updatedAt - a.updatedAt);
+
+    dom.historyCount.textContent = String(chats.length);
+
+    if (!chats.length) {
+      list.append(el('li', 'nav-empty', 'No saved chats yet'));
+      return;
+    }
+
+    chats.slice(0, 40).forEach((chat) => {
+      const li = el('li');
+      const btn = el('button', 'nav-list__item' + (chat.id === store.activeChatId ? ' is-active' : ''));
+      btn.type = 'button';
+      btn.dataset.chatId = chat.id;
+
+      const label = el('span', 'nav-list__label', chat.title || 'Untitled chat');
+      const del = el('span', 'nav-list__del');
+      del.setAttribute('role', 'button');
+      del.setAttribute('aria-label', `Delete ${chat.title || 'chat'}`);
+      del.innerHTML = svgUse('i-trash');
+
+      btn.append(label, del);
+      li.append(btn);
+      list.append(li);
+    });
+  }
+
+  function renderAgents() {
+    const list = dom.agentsList;
+    list.innerHTML = '';
+
+    const all = [BUILTIN_AGENT, ...store.agents];
+    dom.agentsCount.textContent = String(all.length);
+
+    all.forEach((agent) => {
+      const li = el('li');
+      const btn = el('button', 'nav-list__item' +
+        (agent.id === store.activeAgentId ? ' is-active' : ''));
+      btn.type = 'button';
+      btn.dataset.agentId = agent.id;
+
+      const emoji = el('span', '', agent.emoji || '⚡');
+      emoji.setAttribute('aria-hidden', 'true');
+      emoji.style.flex = '0 0 auto';
+
+      const label = el('span', 'nav-list__label', agent.name);
+      btn.append(emoji, label);
+
+      if (!agent.builtin) {
+        const del = el('span', 'nav-list__del');
+        del.setAttribute('role', 'button');
+        del.setAttribute('aria-label', `Delete agent ${agent.name}`);
+        del.innerHTML = svgUse('i-trash');
+        btn.append(del);
+      }
+
+      li.append(btn);
+      list.append(li);
+    });
+  }
+
+  function renderProjects() {
+    const list = dom.projectsList;
+    list.innerHTML = '';
+    dom.projectsCount.textContent = String(store.projects.length);
+
+    if (!store.projects.length) {
+      list.append(el('li', 'nav-empty', 'No projects yet'));
+      return;
+    }
+
+    store.projects.forEach((project) => {
+      const li = el('li');
+      const btn = el('button', 'nav-list__item');
+      btn.type = 'button';
+      btn.dataset.projectId = project.id;
+
+      const label = el('span', 'nav-list__label', project.name);
+      const count = el('span', 'nav-list__meta',
+        String(store.chats.filter((c) => c.projectId === project.id).length));
+
+      const del = el('span', 'nav-list__del');
+      del.setAttribute('role', 'button');
+      del.setAttribute('aria-label', `Delete project ${project.name}`);
+      del.innerHTML = svgUse('i-trash');
+
+      btn.append(label, count, del);
+      li.append(btn);
+      list.append(li);
+    });
+  }
+
+  function renderLibrary() {
+    const list = dom.libraryList;
+    list.innerHTML = '';
+    dom.libraryCount.textContent = String(store.library.length);
+
+    if (!store.library.length) {
+      list.append(el('li', 'nav-empty', 'No files yet'));
+      return;
+    }
+
+    store.library.slice(0, 30).forEach((file) => {
+      const li = el('li');
+      const btn = el('button', 'nav-list__item');
+      btn.type = 'button';
+      btn.title = `${file.name} — ${(file.size / 1024).toFixed(1)} KB`;
+
+      const icon = el('span', '', '');
+      icon.innerHTML = svgUse('i-file');
+      icon.style.cssText = 'display:grid;place-items:center;flex:0 0 auto;color:var(--text-faint)';
+      icon.querySelector('svg').style.cssText = 'width:13px;height:13px';
+
+      const label = el('span', 'nav-list__label', file.name);
+      btn.append(icon, label);
+      li.append(btn);
+      list.append(li);
+    });
+  }
+
+  function renderSidebar() {
+    renderHistory();
+    renderAgents();
+    renderProjects();
+    renderLibrary();
+  }
+
+  /* ==========================================================
+     07. MESSAGE RENDERING
+     ========================================================== */
+  const AVATAR_USER = svgUse('i-user');
+  const AVATAR_BOT  = svgUse('i-bolt');
+
+  function renderMarkdown(text) {
+    const escaped = escapeHtml(text);
+    const parts = escaped.split(/```(\w*)\n?([\s\S]*?)```/g);
+    let html = '';
+
+    for (let i = 0; i < parts.length; i += 3) {
+      let chunk = parts[i] ?? '';
+      chunk = chunk.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+      chunk = chunk.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+      chunk = chunk.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
+      html += chunk;
+
+      if (i + 2 < parts.length) {
+        const lang = parts[i + 1] || '';
+        const code = parts[i + 2] || '';
+        html += `<pre><code data-lang="${escapeHtml(lang)}">${code.replace(/\n$/, '')}</code></pre>`;
+      }
+    }
+
+    return html;
+  }
+
+  function createMessageEl({ role, text, ts, error = false, sources = null, mcpTools = null }) {
+    const isUser = role === 'user';
+    const article = el('article', `msg msg--${role}${error ? ' msg--error' : ''}`);
+
+    const avatar = el('div', 'msg__avatar');
+    avatar.setAttribute('aria-hidden', 'true');
+    avatar.innerHTML = isUser ? AVATAR_USER : AVATAR_BOT;
+
+    const body   = el('div', 'msg__body');
+    const bubble = el('div', 'msg__bubble');
+    const content = el('div', 'msg__text');
+
+    if (isUser) {
+      content.textContent = text;
+    } else {
+      content.innerHTML = renderMarkdown(text);
+    }
+
+    const meta = el('div', 'msg__meta');
+    const time = el('time', '', new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+    time.dateTime = new Date(ts).toISOString();
+    meta.append(time);
+
+    if (!isUser && !error) {
+      const copy = el('button', 'msg__copy', 'Copy');
+      copy.type = 'button';
+      copy.dataset.copy = 'true';
+      meta.append(copy);
+    }
+
+    bubble.append(content);
+
+    // Sources block
+    if (sources && sources.length) {
+      const details = document.createElement('details');
+      details.className = 'sources';
+      details.innerHTML =
+        `<summary>${sources.length} source${sources.length > 1 ? 's' : ''}</summary>` +
+        '<ol>' +
+        sources.map((s, i) =>
+          `<li><a href="${escapeHtml(s.url)}" target="_blank" rel="noopener noreferrer">` +
+            `<span class="src-idx">[${i + 1}]</span>` +
+            `<span>${escapeHtml(s.title)}</span>` +
+          `</a></li>`
+        ).join('') +
+        '</ol>';
+      bubble.append(details);
+    }
+
+    // MCP tools used
+    if (mcpTools && mcpTools.length) {
+      const tools = el('div', 'mcp-tools');
+      tools.innerHTML = mcpTools.map((t) =>
+        `<span class="mcp-tool">${svgUse('i-tool')}${escapeHtml(t)}</span>`
+      ).join('');
+      bubble.append(tools);
+    }
+
+    body.append(bubble, meta);
+    article.append(avatar, body);
+
+    return article;
+  }
+
+  function createTypingEl() {
+    const article = el('article', 'msg msg--bot msg--typing');
+    article.setAttribute('aria-hidden', 'true');
+    article.innerHTML =
+      `<div class="msg__avatar">${AVATAR_BOT}</div>` +
+      `<div class="msg__body"><div class="msg__bubble">` +
+        `<span></span><span></span><span></span>` +
+      `</div></div>`;
+    return article;
+  }
+
+  function hideEmpty() {
+    if (dom.empty.hidden) return;
+    dom.empty.hidden = true;
+    dom.log.classList.remove('is-empty');
+  }
+
+  function showEmpty() {
+    dom.empty.hidden = false;
+    dom.log.classList.add('is-empty');
+  }
+
+  function animateIn(node) {
+    if (REDUCED_MOTION) return;
+    if (window.gsap) {
+      window.gsap.from(node, { y: 12, opacity: 0, duration: 0.4, ease: 'power3.out' });
+      return;
+    }
+    node.classList.add('is-entering');
+    node.addEventListener('animationend',
+      () => node.classList.remove('is-entering'), { once: true });
+  }
+
+  function scrollToBottom(smooth = true) {
+    dom.chat.scrollTo({
+      top: dom.chat.scrollHeight,
+      behavior: smooth && !REDUCED_MOTION ? 'smooth' : 'auto'
+    });
+  }
+
+  function renderChat(chat) {
+    dom.log.querySelectorAll('.msg').forEach((n) => n.remove());
+
+    if (!chat || !chat.messages.length) {
+      showEmpty();
+      return;
+    }
+
+    hideEmpty();
+    const frag = document.createDocumentFragment();
+    chat.messages.forEach((m) => {
+      frag.append(createMessageEl({
+        role: m.role,
+        text: m.text,
+        ts: m.ts,
+        error: m.error,
+        sources: m.sources,
+        mcpTools: m.mcpTools
+      }));
+    });
+    dom.log.append(frag);
+    scrollToBottom(false);
+  }
+
+  /* ==========================================================
+     08. CHAT MANAGEMENT
+     ========================================================== */
+  function getActiveChat() {
+    return store.chats.find((c) => c.id === store.activeChatId) || null;
+  }
+
+  function getActiveAgent() {
+    if (store.activeAgentId === BUILTIN_AGENT.id) return BUILTIN_AGENT;
+    return store.agents.find((a) => a.id === store.activeAgentId) || BUILTIN_AGENT;
+  }
+
+  function createChat({ temporary = false, projectId = null } = {}) {
+    const chat = {
+      id: uid(),
+      title: temporary ? 'Temporary chat' : 'New chat',
+      agentId: store.activeAgentId || BUILTIN_AGENT.id,
+      projectId,
+      messages: [],
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      temporary
+    };
+
+    if (!temporary) {
+      store.chats.unshift(chat);
+      store.activeChatId = chat.id;
+      store.tempChat = null;
+    } else {
+      store.tempChat = chat;
+      store.activeChatId = null;
+    }
+
+    save();
+    renderSidebar();
+    updateTopbar();
+    renderChat(chat);
+    return chat;
+  }
+
+  function openChat(chatId) {
+    const chat = store.chats.find((c) => c.id === chatId);
+    if (!chat) return;
+
+    store.activeChatId = chat.id;
+    store.tempChat = null;
+    if (chat.agentId) store.activeAgentId = chat.agentId;
+
+    save();
+    renderSidebar();
+    updateTopbar();
+    renderChat(chat);
+    closeSidebarOnMobile();
+    dom.input.focus();
+  }
+
+  function deleteChat(chatId) {
+    const idx = store.chats.findIndex((c) => c.id === chatId);
+    if (idx === -1) return;
+
+    const wasActive = store.chats[idx].id === store.activeChatId;
+    store.chats.splice(idx, 1);
+
+    if (wasActive) {
+      store.activeChatId = store.chats[0]?.id ?? null;
+      renderChat(getActiveChat());
+    }
+
+    save();
+    renderSidebar();
+    updateTopbar();
+  }
+
+  function currentChatForWrite() {
+    if (store.tempChat) return store.tempChat;
+    let chat = getActiveChat();
+    if (!chat) chat = createChat();
+    return chat;
+  }
+
+  /* ==========================================================
+     09. TOPBAR
+     ========================================================== */
+  function updateTopbar() {
+    const chat  = getActiveChat() || store.tempChat;
+    const agent = getActiveAgent();
+
+    dom.chatTitle.textContent = chat ? (chat.title || 'New chat') : 'New chat';
+    dom.agentPillTx.textContent = agent.name;
+    dom.agentPill.firstElementChild.textContent = agent.emoji || '⚡';
+  }
+
+  function setStatus(mode, text) {
+    const thinking = mode === 'thinking';
+    dom.statusPill.classList.toggle('is-thinking', thinking);
+    dom.statusText.textContent = text ?? (thinking ? 'Thinking…' : 'Ready');
+    dom.chat.setAttribute('aria-busy', thinking ? 'true' : 'false');
+  }
+
+  /* ==========================================================
+     10. COMPOSER
+     ========================================================== */
+  function resizeInput() {
+    dom.input.style.height = 'auto';
+    dom.input.style.height = Math.min(dom.input.scrollHeight, MAX_INPUT_PX) + 'px';
+  }
+
+  function syncSend() {
+    dom.send.disabled = isSending || dom.input.value.trim().length === 0;
+  }
+
+  function renderModebar() {
+    dom.modebar.innerHTML = '';
+
+    Object.entries(modes).forEach(([key, on]) => {
+      if (!on) return;
+      const meta = MODE_META[key];
+      const tag = el('span', 'mode-tag');
+
+      tag.innerHTML =
+        svgUse(meta.icon) +
+        `<span>${escapeHtml(meta.label)}</span>` +
+        `<button type="button" aria-label="Turn off ${escapeHtml(meta.label)}" data-mode-off="${key}">` +
+          svgUse('i-close') +
+        `</button>`;
+
+      dom.modebar.append(tag);
+    });
+
+    $$('#toolbar .tool[data-tool]').forEach((btn) => {
+      const key = btn.dataset.tool;
+      if (!(key in modes)) return;
+      btn.classList.toggle('is-on', modes[key]);
+      btn.setAttribute('aria-pressed', String(modes[key]));
+    });
+  }
+
+  function renderAttachments() {
+    dom.attachments.innerHTML = '';
+
+    pendingAttachments.forEach((file) => {
+      const chip = el('span', 'attach');
+      chip.innerHTML =
+        svgUse('i-file') +
+        `<span class="attach__name">${escapeHtml(file.name)}</span>` +
+        `<button type="button" aria-label="Remove ${escapeHtml(file.name)}" data-detach="${file.id}">` +
+          svgUse('i-close') +
+        `</button>`;
+      dom.attachments.append(chip);
+    });
+  }
+
+  function toggleToolbar(force) {
+    const open = force ?? dom.toolbar.hidden;
+    dom.toolbar.hidden = !open;
+    dom.btnTools.setAttribute('aria-expanded', String(open));
+
+    if (open && !REDUCED_MOTION && window.gsap) {
+      window.gsap.from(dom.toolbar, {
+        y: 10, opacity: 0, scale: 0.98, duration: 0.22, ease: 'power2.out',
+        transformOrigin: 'bottom left'
+      });
+    }
+  }
+
+  /* ==========================================================
+     11. FILE HANDLING
+     ========================================================== */
+  const TEXT_EXT = /\.(txt|md|markdown|json|csv|js|mjs|ts|tsx|jsx|html|htm|css|scss|py|rb|go|rs|java|c|cpp|h|sh|yml|yaml|xml|svg)$/i;
+
+  async function handleFiles(fileList) {
+    const files = Array.from(fileList).slice(0, 6);
+
+    for (const file of files) {
+      const record = {
+        id: uid(),
+        name: file.name,
+        type: file.type || 'application/octet-stream',
+        size: file.size
+      };
+
+      if (file.size <= 2 * 1024 * 1024 &&
+          (TEXT_EXT.test(file.name) || file.type.startsWith('text/'))) {
+        try { record.text = (await file.text()).slice(0, 20000); }
+        catch { /* ignore */ }
+      }
+
+      pendingAttachments.push(record);
+
+      store.library.unshift({
+        id: uid(),
+        name: file.name,
+        type: record.type,
+        size: file.size,
+        addedAt: Date.now()
+      });
+    }
+
+    save();
+    renderLibrary();
+    renderAttachments();
+    syncSend();
+  }
+
+  /* ==========================================================
+     12. SYSTEM PROMPT BUILDER
+     ========================================================== */
+  function buildSystemPrompt() {
+    const agent = getActiveAgent();
+    const parts = [agent.instructions || BUILTIN_AGENT.instructions];
+
+    if (store.settings.personalization) {
+      const toneMap = {
+        concise:  'Prefer short, direct answers. Avoid preamble.',
+        detailed: 'Give thorough, well-structured answers with examples.',
+        friendly: 'Use a warm, conversational tone.',
+        formal:   'Use a formal, professional tone.',
+        balanced: ''
+      };
+      const toneLine = toneMap[store.settings.tone];
+      if (toneLine) parts.push(toneLine);
+    }
+
+    if (modes.deepThinking) {
+      parts.push('Think through the problem step by step before answering. Show your reasoning briefly, then give a clear final answer.');
+    }
+    if (modes.deepResearch) {
+      parts.push('Produce a comprehensive, well-organised research-style answer. Structure it with headings, cover multiple angles, and flag any uncertainty explicitly.');
+    }
+    if (modes.webSearch && store.settings.searchProvider !== 'none') {
+      parts.push('Live tool results are provided in the next system message. Ground your answer in them and cite sources inline as [1], [2], etc.');
+    }
+    if (modes.canvas) {
+      parts.push('Format code and long-form writing in clean, well-labelled blocks suitable for editing.');
+    }
+    if (modes.guideLearning) {
+      parts.push('Teach step by step. Use plain language, short paragraphs, and a concrete example. Check understanding at the end with one question.');
+    }
+    if (modes.personalIntelligence && store.settings.personalIntelligence) {
+      const name = store.settings.profile.name;
+      const ctx  = store.settings.context.trim();
+      const bits = [];
+      if (name) bits.push(`The user's name is ${name}.`);
+      if (ctx)  bits.push(`User background: ${ctx}`);
+      if (bits.length) parts.push(bits.join(' '));
+    }
+    if (store.settings.language !== 'auto' && LANG_NAMES[store.settings.language]) {
+      parts.push(`Always respond in ${LANG_NAMES[store.settings.language]}.`);
+    }
+
+    return parts.filter(Boolean).join('\n\n');
+  }
+
+  /* ==========================================================
+     13. MCP CLIENT
+     ========================================================== */
+  const mcpState = {
+    sessionId: null,
+    tools: [],
+    connected: false
+  };
+
+  let mcpRpcId = 0;
+
+  function mcpHeaders(extra = {}) {
+    const headers = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json, text/event-stream',
+      ...extra
+    };
+    if (store.settings.mcpApiKey?.trim()) {
+      headers['Authorization'] = `Bearer ${store.settings.mcpApiKey.trim()}`;
+    }
+    if (mcpState.sessionId) {
+      headers['Mcp-Session-Id'] = mcpState.sessionId;
+    }
+    return headers;
+  }
+
+  /**
+   * Send a JSON-RPC 2.0 request to the MCP server.
+   * Handles both single-JSON responses and SSE-streamed responses.
+   */
+  async function mcpRequest(method, params = {}, { notify = false } = {}) {
+    const url = store.settings.mcpUrl?.trim();
+    if (!url) throw new Error('No MCP server URL set.');
+
+    const body = notify
+      ? { jsonrpc: '2.0', method, params }
+      : { jsonrpc: '2.0', id: ++mcpRpcId, method, params };
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: mcpHeaders(),
+      body: JSON.stringify(body)
+    });
+
+    // Capture session id if the server assigned one
+    const sid = res.headers.get('Mcp-Session-Id');
+    if (sid) mcpState.sessionId = sid;
+
+    if (notify) return null;
+
+    if (!res.ok) {
+      let detail = `HTTP ${res.status}`;
+      try {
+        const err = await res.json();
+        detail = err?.error?.message || err?.message || detail;
+      } catch { /* keep default */ }
+      throw new Error(`MCP: ${detail}`);
+    }
+
+    const contentType = res.headers.get('Content-Type') || '';
+
+    // Single JSON response
+    if (contentType.includes('application/json')) {
+      const json = await res.json();
+      if (json?.error) throw new Error(`MCP: ${json.error.message}`);
+      return json?.result ?? null;
+    }
+
+    // SSE stream
+    if (contentType.includes('text/event-stream')) {
+      const text = await res.text();
+      let result = null;
+
+      for (const line of text.split('\n')) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith('data:')) continue;
+        const payload = trimmed.slice(5).trim();
+        if (!payload) continue;
+
+        try {
+          const msg = JSON.parse(payload);
+          if (msg?.error) throw new Error(`MCP: ${msg.error.message}`);
+          if (msg?.result) result = msg.result;
+        } catch (parseErr) {
+          if (parseErr.message.startsWith('MCP:')) throw parseErr;
+        }
+      }
+
+      return result;
+    }
+
+    throw new Error(`MCP: unexpected content type "${contentType}"`);
+  }
+
+  async function mcpInitialize() {
+    const result = await mcpRequest('initialize', {
+      protocolVersion: '2025-03-26',
+      capabilities: {},
+      clientInfo: { name: 'Sonic', version: '1.0.0' }
+    });
+
+    // Required follow-up notification
+    await mcpRequest('notifications/initialized', {}, { notify: true });
+
+    mcpState.connected = true;
+    return result;
+  }
+
+  async function mcpListTools() {
+    const result = await mcpRequest('tools/list', {});
+    mcpState.tools = result?.tools || [];
+    return mcpState.tools;
+  }
+
+  async function mcpCallTool(name, args) {
+    const result = await mcpRequest('tools/call', { name, arguments: args });
+    return result;
+  }
+
+  /** Extract plain text from an MCP tool result. */
+  function mcpResultToText(result) {
+    if (!result) return '';
+    const items = result.content || [];
+    return items
+      .filter((c) => c.type === 'text')
+      .map((c) => c.text || '')
+      .join('\n\n');
+  }
+
+  async function connectMcp({ silent = false } = {}) {
+    const status = $('#mcp-status');
+    if (!silent) setProvStatus(status, 'busy', 'Connecting…');
+
+    try {
+      mcpState.sessionId = null;
+      mcpState.tools = [];
+      mcpState.connected = false;
+
+      await mcpInitialize();
+      const tools = await mcpListTools();
+
+      if (!silent) {
+        setProvStatus(status, 'ok',
+          `✓ Connected — ${tools.length} tool${tools.length === 1 ? '' : 's'}`);
+      }
+
+      renderMcpTools();
+      return tools;
+    } catch (err) {
+      mcpState.connected = false;
+      if (!silent) setProvStatus(status, 'error', `✕ ${err.message}`);
+      throw err;
+    }
+  }
+
+  function renderMcpTools() {
+    const listEl = $('#mcp-tool-list');
+    const select = $('#set-mcp-tool');
+
+    // Populate the select
+    select.innerHTML = '<option value="">Auto — use the first discovered tool</option>';
+    mcpState.tools.forEach((t) => {
+      const opt = document.createElement('option');
+      opt.value = t.name;
+      opt.textContent = t.name;
+      select.append(opt);
+    });
+    select.value = store.settings.mcpToolName || '';
+
+    // Populate the visual list
+    listEl.hidden = mcpState.tools.length === 0;
+    listEl.innerHTML = mcpState.tools.map((t) =>
+      `<div class="mcp-tool-row">` +
+        `${svgUse('i-tool')}` +
+        `<code>${escapeHtml(t.name)}</code>` +
+        `<span>${escapeHtml(t.description || 'No description')}</span>` +
+      `</div>`
+    ).join('');
+  }
+
+  /** Run an MCP search: pick a tool, call it, return { text, toolName }. */
+  async function performMcpSearch(query, signal) {
+    if (!mcpState.connected || !mcpState.tools.length) {
+      await connectMcp({ silent: true });
+    }
+
+    const toolName = store.settings.mcpToolName || mcpState.tools[0]?.name;
+    if (!toolName) throw new Error('No MCP tools available on this server.');
+
+    const tool = mcpState.tools.find((t) => t.name === toolName);
+    if (!tool) throw new Error(`MCP tool "${toolName}" not found.`);
+
+    // Build arguments from the tool's schema. Try common search param names.
+    const schema = tool.inputSchema || {};
+    const props = schema.properties || {};
+    const args = {};
+
+    const queryKeys = ['query', 'q', 'search', 'term', 'input', 'text', 'prompt'];
+    const matched = queryKeys.find((k) => k in props);
+
+    if (matched) {
+      args[matched] = query;
+    } else {
+      // Fall back: set the first required string prop
+      const required = schema.required || [];
+      const firstString = Object.keys(props).find(
+        (k) => props[k]?.type === 'string' || required.includes(k)
+      );
+      if (firstString) args[firstString] = query;
+    }
+
+    const result = await mcpCallTool(toolName, args);
+    const text = mcpResultToText(result);
+
+    return { text, toolName };
+  }
+
+  /* ==========================================================
+     14. OTHER SEARCH PROVIDERS
+     ========================================================== */
+  async function performCohereSearch(query, signal) {
+    const key = store.settings.cohereApiKey?.trim();
+    if (!key) throw new Error('No Cohere API key set.');
+
+    const res = await fetch(COHERE_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${key}`
+      },
+      body: JSON.stringify({
+        model: 'command-r-plus-08-2024',
+        messages: [{ role: 'user', content: query }],
+        connectors: [{ id: 'web-search' }]
+      }),
+      signal
+    });
+
+    if (!res.ok) {
+      let detail = `HTTP ${res.status}`;
+      try {
+        const err = await res.json();
+        detail = err?.message || err?.error?.message || detail;
+      } catch { /* keep default */ }
+      throw new Error(`Cohere: ${detail}`);
+    }
+
+    const data = await res.json();
+    const message = data?.message;
+
+    const answer = (message?.content || [])
+      .map((c) => c?.text || '')
+      .join('')
+      .trim();
+
+    const seen = new Set();
+    const sources = [];
+
+    for (const cite of message?.citations || []) {
+      for (const src of cite?.sources || []) {
+        const url = src?.url || '';
+        if (!url || seen.has(url)) continue;
+        seen.add(url);
+        sources.push({
+          title: src.title || url,
+          url,
+          snippet: (src.snippet || '').slice(0, 480)
+        });
+      }
+    }
+
+    return { answer, sources };
+  }
+
+  async function performTavilySearch(query, signal) {
+    const key = store.settings.searchApiKey?.trim();
+    if (!key) throw new Error('No Tavily API key set.');
+
+    const res = await fetch(TAVILY_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        api_key: key,
+        query,
+        search_depth: 'basic',
+        max_results: 5,
+        include_answer: true
+      }),
+      signal
+    });
+
+    if (!res.ok) {
+      let detail = `HTTP ${res.status}`;
+      try {
+        const err = await res.json();
+        detail = err?.detail?.error || err?.detail || err?.message || detail;
+      } catch { /* keep default */ }
+      throw new Error(`Tavily: ${detail}`);
+    }
+
+    const data = await res.json();
+    return {
+      answer: data.answer || '',
+      sources: (data.results || []).map((r) => ({
+        title: r.title || 'Untitled',
+        url: r.url,
+        snippet: (r.content || '').slice(0, 480)
+      }))
+    };
+  }
+
+  async function performWikipediaSearch(query, signal) {
+    const searchUrl = 'https://en.wikipedia.org/w/api.php?' + new URLSearchParams({
+      action: 'query',
+      list: 'search',
+      srsearch: query,
+      format: 'json',
+      origin: '*',
+      srlimit: '4'
+    });
+
+    const res = await fetch(searchUrl, { signal });
+    if (!res.ok) throw new Error(`Wikipedia: HTTP ${res.status}`);
+
+    const data = await res.json();
+    const hits = data?.query?.search || [];
+    if (!hits.length) return { answer: '', sources: [] };
+
+    const sources = await Promise.all(hits.map(async (hit) => {
+      const fallbackUrl =
+        `https://en.wikipedia.org/wiki/${encodeURIComponent(hit.title)}`;
+
+      try {
+        const sumRes = await fetch(
+          'https://en.wikipedia.org/api/rest_v1/page/summary/' +
+          encodeURIComponent(hit.title),
+          { signal }
+        );
+        if (!sumRes.ok) throw new Error('summary failed');
+
+        const sum = await sumRes.json();
+        return {
+          title: sum.title || hit.title,
+          url: sum.content_urls?.desktop?.page || fallbackUrl,
+          snippet: (sum.extract || '').slice(0, 480)
+        };
+      } catch {
+        return {
+          title: hit.title,
+          url: fallbackUrl,
+          snippet: (hit.snippet || '').replace(/<[^>]+>/g, '').slice(0, 480)
+        };
+      }
+    }));
+
+    return { answer: '', sources };
+  }
+
+  /** Unified search dispatcher. Returns { answer, sources, mcpTools }. */
+  async function performSearch(query, signal) {
+    const provider = store.settings.searchProvider;
+
+    if (provider === 'mcp') {
+      const { text, toolName } = await performMcpSearch(query, signal);
+      return { answer: text, sources: [], mcpTools: [toolName] };
+    }
+
+    if (provider === 'cohere') {
+      const r = await performCohereSearch(query, signal);
+      return { ...r, mcpTools: [] };
+    }
+
+    if (provider === 'tavily') {
+      const r = await performTavilySearch(query, signal);
+      return { ...r, mcpTools: [] };
+    }
+
+    if (provider === 'wikipedia') {
+      const r = await performWikipediaSearch(query, signal);
+      return { ...r, mcpTools: [] };
+    }
+
+    throw new Error('No search provider configured.');
+  }
+
+  function formatSearchContext(query, results) {
+    const lines = [`[Live search results for: "${query}"]`];
+
+    if (results.answer) {
+      lines.push('', `Result: ${results.answer}`);
+    }
+
+    if (results.sources.length) {
+      lines.push('', 'Sources:');
+      results.sources.forEach((s, i) => {
+        lines.push(`[${i + 1}] ${s.title}`, s.url, s.snippet, '');
+      });
+    }
+
+    lines.push(
+      'Use these results to inform your answer. Cite sources inline as [1], [2], etc. ' +
+      'If the results do not contain the answer, say so plainly rather than guessing.'
+    );
+
+    return lines.join('\n');
+  }
+
+  /* ==========================================================
+     15. GROQ — STREAMING
+     ========================================================== */
+  function buildApiMessages(chat, searchContext = '') {
+    const system = buildSystemPrompt();
+    const messages = [{ role: 'system', content: system }];
+
+    const history = chat.messages
+      .filter((m) => !m.error)
+      .slice(-24)
+      .map((m) => ({
+        role: m.role === 'bot' ? 'assistant' : 'user',
+        content: m.text
+      }));
+
+    if (searchContext && history.length) {
+      const lastUser = history.pop();
+      messages.push(...history);
+      messages.push({ role: 'system', content: searchContext });
+      messages.push(lastUser);
+    } else {
+      messages.push(...history);
+    }
+
+    return messages;
+  }
+
+  async function streamGroq(messages, { onDelta, signal }) {
+    const { apiKey, model, temperature } = store.settings;
+
+    const res = await fetch(GROQ_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model,
+        messages,
+        temperature: clamp(Number(temperature) || 0.7, 0, 2),
+        max_tokens: 2048,
+        stream: true
+      }),
+      signal
+    });
+
+    if (!res.ok) {
+      let detail = `HTTP ${res.status}`;
+      try {
+        const err = await res.json();
+        detail = err?.error?.message || err?.message || detail;
+      } catch { /* keep default */ }
+      throw new Error(detail);
+    }
+
+    if (!res.body) throw new Error('Streaming is not supported in this browser.');
+
+    const reader  = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let full   = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() ?? '';
+
+      for (const raw of lines) {
+        const line = raw.trim();
+        if (!line.startsWith('data:')) continue;
+
+        const payload = line.slice(5).trim();
+        if (!payload || payload === '[DONE]') continue;
+
+        try {
+          const json  = JSON.parse(payload);
+          const delta = json?.choices?.[0]?.delta?.content;
+          if (delta) {
+            full += delta;
+            onDelta(delta, full);
+          }
+        } catch { /* partial frame — skip */ }
+      }
+    }
+
+    return full;
+  }
+
+  /* ==========================================================
+     16. LOCAL FALLBACK
+     ========================================================== */
+  function localReply(text) {
+    const t = text.trim();
+
+    const math = t.match(/^(-?\d+(?:\.\d+)?)\s*([+\-*/x×])\s*(-?\d+(?:\.\d+)?)\s*=?$/);
+    if (math) {
+      const a = parseFloat(math[1]);
+      const b = parseFloat(math[3]);
+      const op = math[2];
+      let r;
+      if (op === '+') r = a + b;
+      else if (op === '-') r = a - b;
+      else if (op === '*' || op === 'x' || op === '×') r = a * b;
+      else {
+        if (b === 0) return 'Division by zero is undefined.';
+        r = a / b;
+      }
+      const fmt = (n) => Number.isInteger(n) ? String(n) : String(+n.toFixed(6));
+      return `${fmt(a)} ${op} ${fmt(b)} = ${fmt(r)}`;
+    }
+
+    if (/\b(time)\b/i.test(t)) {
+      return `It’s ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.`;
+    }
+    if (/\b(date|today|day)\b/i.test(t)) {
+      return `Today is ${new Date().toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })}.`;
+    }
+    if (/\b(hi|hello|hey|yo)\b/i.test(t)) {
+      return 'Hey — Sonic here. Add your API keys in **Settings → API** to unlock full model responses and live tools.';
+    }
+    if (/\?$/.test(t)) {
+      return 'Good question. I’m running in offline demo mode — open **Settings → API** and add a Groq key (for chat) and an MCP server (for tools).';
+    }
+
+    return 'Offline demo mode. Add your API keys in **Settings → API** for full responses.';
+  }
+
+  /* ==========================================================
+     17. SENDING
+     ========================================================== */
+  function buildUserText(raw, attachments) {
+    if (!attachments.length) return raw;
+
+    const blocks = attachments.map((f) => {
+      if (f.text) {
+        return `--- File: ${f.name} ---\n${f.text}\n--- End of ${f.name} ---`;
+      }
+      return `--- Attached file: ${f.name} (${f.type || 'unknown'}, ${(f.size / 1024).toFixed(1)} KB) ---`;
+    });
+
+    return `${raw}\n\n${blocks.join('\n\n')}`;
+  }
+
+  async function send(text) {
+    if (isSending || !text.trim()) return;
+
+    const chat = currentChatForWrite();
+    const rawText = text.trim();
+    const attachments = pendingAttachments.slice();
+
+    const userText = buildUserText(rawText, attachments);
+    const userTs = Date.now();
+
+    chat.messages.push({ role: 'user', text: userText, ts: userTs });
+
+    if (chat.title === 'New chat' || chat.title === 'Temporary chat') {
+      chat.title = rawText.slice(0, 42) || 'New chat';
+    }
+    chat.updatedAt = Date.now();
+
+    hideEmpty();
+    dom.log.append(createMessageEl({ role: 'user', text: userText, ts: userTs }));
+    scrollToBottom();
+
+    dom.input.value = '';
+    resizeInput();
+    pendingAttachments = [];
+    renderAttachments();
+    toggleToolbar(false);
+
+    save();
+    renderSidebar();
+    updateTopbar();
+
+    isSending = true;
+    syncSend();
+
+    const typing = createTypingEl();
+    dom.log.append(typing);
+    scrollToBottom();
+
+    let botEl = null;
+    let botText = '';
+    let searchSources = [];
+    let mcpToolsUsed = [];
+
+    const finish = (finalText, { error = false } = {}) => {
+      typing.remove();
+
+      const ts = Date.now();
+      chat.messages.push({
+        role: 'bot',
+        text: finalText,
+        ts,
+        error,
+        sources: (!error && searchSources.length) ? searchSources : undefined,
+        mcpTools: (!error && mcpToolsUsed.length) ? mcpToolsUsed : undefined
+      });
+      chat.updatedAt = Date.now();
+
+      if (botEl) botEl.remove();
+
+      const node = createMessageEl({
+        role: 'bot',
+        text: finalText,
+        ts,
+        error,
+        sources: (!error && searchSources.length) ? searchSources : null,
+        mcpTools: (!error && mcpToolsUsed.length) ? mcpToolsUsed : null
+      });
+      dom.log.append(node);
+      animateIn(node);
+
+      save();
+      renderSidebar();
+
+      setStatus('ready');
+      isSending = false;
+      syncSend();
+      scrollToBottom();
+
+      if (window.matchMedia('(min-width: 721px)').matches) dom.input.focus();
+      abortController = null;
+    };
+
+    /* ---------------- SEARCH / TOOLS FIRST ---------------- */
+    let searchContext = '';
+
+    if (modes.webSearch) {
+      if (store.settings.searchProvider === 'none') {
+        finish(
+          '⚠️ **Web search is on, but no provider is configured.**\n\n' +
+          'Open **Settings → API** and pick a provider — **MCP** for the ' +
+          'Model Context Protocol, or Cohere / Tavily / Wikipedia.',
+          { error: true }
+        );
+        return;
+      }
+
+      setStatus('thinking', 'Searching…');
+      abortController = new AbortController();
+
+      try {
+        const results = await performSearch(rawText, abortController.signal);
+        searchSources = results.sources || [];
+        mcpToolsUsed = results.mcpTools || [];
+
+        if (results.answer || results.sources.length) {
+          searchContext = formatSearchContext(rawText, results);
+        } else {
+          searchContext = `[Search for "${rawText}" returned no usable results.]`;
+        }
+      } catch (err) {
+        if (err.name === 'AbortError') { abortController = null; return; }
+
+        console.error('[search] failed:', err);
+
+        const isFatal = /401|403|invalid.*key|unauthor|no.*key|not.*set|not.*available|not found/i
+          .test(err.message);
+
+        if (isFatal) {
+          finish(
+            `⚠️ **Search could not run.**\n\n` +
+            `**Reason:** ${err.message}\n\n` +
+            `Open **Settings → API** and verify your provider configuration.`,
+            { error: true }
+          );
+          return;
+        }
+
+        searchContext =
+          `[Search failed: ${err.message}. Answer from your own knowledge.]`;
+      }
+    }
+
+    /* ---------------- NO GROQ KEY ---------------- */
+    if (!store.settings.apiKey) {
+      setStatus('thinking', 'Thinking…');
+      await new Promise((r) => setTimeout(r, 420));
+
+      let answer;
+      if (searchContext) {
+        const m = searchContext.match(/Result: ([\s\S]*?)(?:\n\nSources:|$)/);
+        answer = m ? m[1].trim() : '';
+      }
+      if (!answer) answer = localReply(rawText);
+      finish(answer);
+      return;
+    }
+
+    /* ---------------- GROQ STREAM ---------------- */
+    setStatus('thinking');
+    abortController = new AbortController();
+
+    try {
+      const payload = buildApiMessages(chat, searchContext);
+
+      const ensureBotEl = () => {
+        if (botEl) return botEl;
+        typing.remove();
+        botEl = createMessageEl({ role: 'bot', text: '', ts: Date.now() });
+        botEl.querySelector('.msg__text').innerHTML = '';
+        dom.log.append(botEl);
+        return botEl;
+      };
+
+      const full = await streamGroq(payload, {
+        signal: abortController.signal,
+        onDelta: (_delta, accumulated) => {
+          botText = accumulated;
+          const node = ensureBotEl();
+          node.querySelector('.msg__text').innerHTML = renderMarkdown(accumulated);
+          scrollToBottom(false);
+        }
+      });
+
+      finish(full || botText || '_(empty response)_');
+    } catch (err) {
+      if (err.name === 'AbortError') {
+        finish(botText || '_(stopped)_');
+      } else {
+        const msg = String(err.message || err);
+        const friendly = /401|403|invalid.*key|unauthor/i.test(msg)
+          ? `Authentication failed. Check your Groq API key in **Settings → API**.\n\nDetails: ${msg}`
+          : `Request failed.\n\nDetails: ${msg}`;
+        finish(friendly, { error: true });
+      }
+    }
+  }
+
+  /* ==========================================================
+     18. SETTINGS DIALOG
+     ========================================================== */
+  function openSettings(tab = 'profile') {
+    syncSettingsUI();
+    switchTab(tab);
+    dom.dlgSettings.showModal();
+  }
+
+  function switchTab(name) {
+    $$('#dlg-settings .tab').forEach((t) => {
+      t.setAttribute('aria-selected', String(t.dataset.tab === name));
+    });
+    $$('#dlg-settings .pane').forEach((p) => {
+      p.hidden = p.dataset.pane !== name;
+    });
+  }
+
+  function syncSettingsUI() {
+    const s = store.settings;
+
+    $('#set-name').value  = s.profile.name || '';
+    $('#set-email').value = s.profile.email || '';
+    $('#set-key').value   = s.apiKey || '';
+    $('#set-model').value = s.model || defaultSettings.model;
+    $('#set-temp').value  = String(s.temperature ?? 0.7);
+    $('#temp-out').textContent = String(s.temperature ?? 0.7);
+    $('#set-lang').value  = s.language || 'auto';
+    $('#set-tone').value  = s.tone || 'balanced';
+    $('#set-context').value = s.context || '';
+
+    // Provider
+    $('#set-search').value = s.searchProvider || 'none';
+    $('#cohere-key-field').hidden = s.searchProvider !== 'cohere';
+    $('#search-key-field').hidden = s.searchProvider !== 'tavily';
+    $('#mcp-fields').hidden = s.searchProvider !== 'mcp';
+
+    $('#set-cohere-key').value = s.cohereApiKey || '';
+    $('#set-search-key').value = s.searchApiKey || '';
+    $('#set-mcp-url').value    = s.mcpUrl || '';
+    $('#set-mcp-key').value    = s.mcpApiKey || '';
+
+    // Clear stale statuses
+    ['#groq-status', '#cohere-status', '#tavily-status', '#mcp-status'].forEach((sel) => {
+      const node = $(sel);
+      if (node) { node.textContent = ''; node.className = 'prov-status'; }
+    });
+
+    $$('#dlg-settings .switch[data-setting]').forEach((sw) => {
+      sw.setAttribute('aria-checked', String(Boolean(s[sw.dataset.setting])));
+    });
+
+    applyTheme();
+    renderPromptGrid();
+
+    if (s.searchProvider === 'mcp' && mcpState.connected) {
+      renderMcpTools();
+      setProvStatus($('#mcp-status'), 'ok',
+        `✓ Connected — ${mcpState.tools.length} tool${mcpState.tools.length === 1 ? '' : 's'}`);
+    }
+  }
+
+  function renderPromptGrid() {
+    dom.promptGrid.innerHTML = '';
+
+    if (!store.prompts.length) {
+      dom.promptGrid.append(el('p', 'nav-empty', 'No saved prompts yet.'));
+      return;
+    }
+
+    store.prompts.forEach((p) => {
+      const card = el('button', 'prompt-card');
+      card.type = 'button';
+      card.dataset.promptId = p.id;
+
+      const title = el('span', 'prompt-card__title', p.title);
+      const body  = el('span', 'prompt-card__body', p.body);
+      card.append(title, body);
+
+      dom.promptGrid.append(card);
+    });
+  }
+
+  /* ==========================================================
+     19. SIDEBAR BEHAVIOUR
+     ========================================================== */
+  function openSidebar() {
+    dom.sidebar.classList.add('is-open');
+    dom.scrim.hidden = false;
+    requestAnimationFrame(() => dom.scrim.classList.add('is-open'));
+    dom.toggleSide.setAttribute('aria-expanded', 'true');
+  }
+
+  function closeSidebar() {
+    dom.sidebar.classList.remove('is-open');
+    dom.scrim.classList.remove('is-open');
+    dom.toggleSide.setAttribute('aria-expanded', 'false');
+    setTimeout(() => {
+      if (!dom.sidebar.classList.contains('is-open')) dom.scrim.hidden = true;
+    }, 320);
+  }
+
+  function closeSidebarOnMobile() {
+    if (window.matchMedia('(max-width: 900px)').matches) closeSidebar();
+  }
+
+  /* ==========================================================
+     20. EVENT WIRING — SIDEBAR
+     ========================================================== */
+  dom.toggleSide.addEventListener('click', () => {
+    dom.sidebar.classList.contains('is-open') ? closeSidebar() : openSidebar();
+  });
+
+  dom.scrim.addEventListener('click', closeSidebar);
+
+  $$('.nav-group__head').forEach((head) => {
+    head.addEventListener('click', () => {
+      const group = head.closest('.nav-group');
+      const open = group.dataset.open !== 'true';
+      group.dataset.open = String(open);
+      head.setAttribute('aria-expanded', String(open));
+    });
+  });
+
+  dom.historyList.addEventListener('click', (e) => {
+    const del = e.target.closest('.nav-list__del');
+    const item = e.target.closest('.nav-list__item');
+    if (!item) return;
+
+    if (del) { e.stopPropagation(); deleteChat(item.dataset.chatId); return; }
+    openChat(item.dataset.chatId);
+  });
+
+  dom.agentsList.addEventListener('click', (e) => {
+    const del = e.target.closest('.nav-list__del');
+    const item = e.target.closest('.nav-list__item');
+    if (!item) return;
+
+    if (del) {
+      e.stopPropagation();
+      const id = item.dataset.agentId;
+      store.agents = store.agents.filter((a) => a.id !== id);
+      if (store.activeAgentId === id) store.activeAgentId = BUILTIN_AGENT.id;
+      save();
+      renderAgents();
+      updateTopbar();
+      return;
+    }
+
+    store.activeAgentId = item.dataset.agentId;
+    const chat = getActiveChat();
+    if (chat) chat.agentId = store.activeAgentId;
+    save();
+    renderAgents();
+    updateTopbar();
+    closeSidebarOnMobile();
+  });
+
+  dom.projectsList.addEventListener('click', (e) => {
+    const del = e.target.closest('.nav-list__del');
+    const item = e.target.closest('.nav-list__item');
+    if (!item) return;
+
+    if (del) {
+      e.stopPropagation();
+      const id = item.dataset.projectId;
+      store.projects = store.projects.filter((p) => p.id !== id);
+      store.chats.forEach((c) => { if (c.projectId === id) c.projectId = null; });
+      save();
+      renderProjects();
+      return;
+    }
+
+    const projectId = item.dataset.projectId;
+    const existing = store.chats.find((c) => c.projectId === projectId);
+    if (existing) {
+      openChat(existing.id);
+    } else {
+      const chat = createChat({ projectId });
+      chat.title = store.projects.find((p) => p.id === projectId)?.name || 'New chat';
+      save();
+      renderSidebar();
+      updateTopbar();
+    }
+    closeSidebarOnMobile();
+  });
+
+  dom.libraryList.addEventListener('click', (e) => {
+    const item = e.target.closest('.nav-list__item');
+    if (!item) return;
+    const name = item.querySelector('.nav-list__label')?.textContent;
+    if (!name) return;
+    dom.input.value = `${dom.input.value}${dom.input.value ? ' ' : ''}${name}`;
+    resizeInput();
+    syncSend();
+    dom.input.focus();
+    closeSidebarOnMobile();
+  });
+
+  dom.btnTemp.addEventListener('click', () => {
+    createChat({ temporary: true });
+    dom.chatTitle.textContent = 'Temporary chat';
+    closeSidebarOnMobile();
+    dom.input.focus();
+  });
+
+  dom.btnNewAgent.addEventListener('click', () => openAgentDialog());
+  dom.btnNewProj.addEventListener('click', () => dom.dlgProject.showModal());
+
+  dom.btnSettings.addEventListener('click', () => openSettings('profile'));
+  dom.hintSettings.addEventListener('click', () => openSettings('api'));
+
+  /* ==========================================================
+     21. EVENT WIRING — DIALOGS
+     ========================================================== */
+  $$('#dlg-settings .tab').forEach((tab) => {
+    tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+  });
+
+  $$('dialog [data-close]').forEach((btn) => {
+    btn.addEventListener('click', () => btn.closest('dialog').close());
+  });
+
+  [dom.dlgSettings, dom.dlgAgent, dom.dlgProject].forEach((dlg) => {
+    dlg.addEventListener('click', (e) => {
+      if (e.target === dlg) dlg.close();
+    });
+  });
+
+  /* ==========================================================
+     22. SETTINGS BINDINGS
+     ========================================================== */
+  const bindInput = (sel, apply) => {
+    const node = $(sel);
+    if (!node) return;
+    node.addEventListener('input', () => { apply(node.value); save(); });
+  };
+
+  bindInput('#set-name',    (v) => { store.settings.profile.name = v; });
+  bindInput('#set-email',   (v) => { store.settings.profile.email = v; });
+  bindInput('#set-key',     (v) => {
+    store.settings.apiKey = v.trim();
+    const st = $('#groq-status');
+    if (st) { st.textContent = ''; st.className = 'prov-status'; }
+  });
+  bindInput('#set-context', (v) => { store.settings.context = v; });
+  bindInput('#set-cohere-key', (v) => {
+    store.settings.cohereApiKey = v.trim();
+    const st = $('#cohere-status');
+    if (st) { st.textContent = ''; st.className = 'prov-status'; }
+  });
+  bindInput('#set-search-key', (v) => {
+    store.settings.searchApiKey = v.trim();
+    const st = $('#tavily-status');
+    if (st) { st.textContent = ''; st.className = 'prov-status'; }
+  });
+  bindInput('#set-mcp-url', (v) => {
+    store.settings.mcpUrl = v.trim();
+    mcpState.connected = false;
+    mcpState.sessionId = null;
+    setProvStatus($('#mcp-status'), 'busy', '');
+  });
+  bindInput('#set-mcp-key', (v) => {
+    store.settings.mcpApiKey = v.trim();
+    mcpState.connected = false;
+    mcpState.sessionId = null;
+    setProvStatus($('#mcp-status'), 'busy', '');
+  });
+
+  $('#set-model').addEventListener('change', (e) => {
+    store.settings.model = e.target.value;
+    save();
+  });
+
+  $('#set-temp').addEventListener('input', (e) => {
+    store.settings.temperature = Number(e.target.value);
+    $('#temp-out').textContent = e.target.value;
+    save();
+  });
+
+  $('#set-lang').addEventListener('change', (e) => {
+    store.settings.language = e.target.value;
+    save();
+  });
+
+  $('#set-tone').addEventListener('change', (e) => {
+    store.settings.tone = e.target.value;
+    save();
+  });
+
+  // Provider change
+  $('#set-search').addEventListener('change', (e) => {
+    const v = e.target.value;
+    store.settings.searchProvider = v;
+    $('#cohere-key-field').hidden = v !== 'cohere';
+    $('#search-key-field').hidden = v !== 'tavily';
+    $('#mcp-fields').hidden = v !== 'mcp';
+    save();
+  });
+
+  // MCP tool select
+  $('#set-mcp-tool').addEventListener('change', (e) => {
+    store.settings.mcpToolName = e.target.value;
+    save();
+  });
+
+  // Password reveal toggles
+  const revealToggle = (btnSel, inputSel) => {
+    const btn = $(btnSel);
+    const input = $(inputSel);
+    if (!btn || !input) return;
+    btn.addEventListener('click', () => {
+      const showing = input.type === 'text';
+      input.type = showing ? 'password' : 'text';
+      btn.textContent = showing ? 'Show' : 'Hide';
+    });
+  };
+  revealToggle('#btn-toggle-groq',   '#set-key');
+  revealToggle('#btn-toggle-cohere', '#set-cohere-key');
+  revealToggle('#btn-toggle-tavily', '#set-search-key');
+  revealToggle('#btn-toggle-mcp',    '#set-mcp-key');
+
+  // Toggle switches
+  $$('#dlg-settings .switch[data-setting]').forEach((sw) => {
+    sw.addEventListener('click', () => {
+      const key = sw.dataset.setting;
+      const next = sw.getAttribute('aria-checked') !== 'true';
+      sw.setAttribute('aria-checked', String(next));
+      store.settings[key] = next;
+      save();
+    });
+  });
+
+  // Theme segmented
+  $$('#seg-theme button').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      store.settings.theme = btn.dataset.themeValue;
+      save();
+      applyTheme();
+    });
+  });
+
+  // Accent swatches
+  $$('#swatches .swatch').forEach((sw) => {
+    sw.addEventListener('click', () => {
+      store.settings.accent = sw.dataset.accentValue;
+      save();
+      applyTheme();
+    });
+  });
+
+  /* ==========================================================
+     23. PROVIDER TESTS
+     ========================================================== */
+  function setProvStatus(node, state, message) {
+    if (!node) return;
+    node.textContent = message;
+    node.className = `prov-status is-${state}`;
+  }
+
+  async function testGroq() {
+    const status = $('#groq-status');
+    const key = store.settings.apiKey?.trim();
+    if (!key) return setProvStatus(status, 'error', '✕ No key set');
+
+    setProvStatus(status, 'busy', 'Testing…');
+
+    try {
+      const res = await fetch(GROQ_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${key}`
+        },
+        body: JSON.stringify({
+          model: store.settings.model,
+          messages: [{ role: 'user', content: 'ping' }],
+          max_tokens: 4,
+          stream: false
+        })
+      });
+
+      if (res.ok) return setProvStatus(status, 'ok', '✓ Connected');
+      const err = await res.json().catch(() => ({}));
+      setProvStatus(status, 'error', `✕ ${err?.error?.message || `HTTP ${res.status}`}`);
+    } catch (e) {
+      setProvStatus(status, 'error', `✕ ${e.message}`);
+    }
+  }
+
+  async function testCohere() {
+    const status = $('#cohere-status');
+    const key = store.settings.cohereApiKey?.trim();
+    if (!key) return setProvStatus(status, 'error', '✕ No key set');
+
+    setProvStatus(status, 'busy', 'Testing…');
+
+    try {
+      const res = await fetch(COHERE_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${key}`
+        },
+        body: JSON.stringify({
+          model: 'command-r-plus-08-2024',
+          messages: [{ role: 'user', content: 'ping' }],
+          max_tokens: 4
+        })
+      });
+
+      if (res.ok) return setProvStatus(status, 'ok', '✓ Connected');
+      const err = await res.json().catch(() => ({}));
+      setProvStatus(status, 'error', `✕ ${err?.message || `HTTP ${res.status}`}`);
+    } catch (e) {
+      setProvStatus(status, 'error', `✕ ${e.message}`);
+    }
+  }
+
+  async function testTavily() {
+    const status = $('#tavily-status');
+    const key = store.settings.searchApiKey?.trim();
+    if (!key) return setProvStatus(status, 'error', '✕ No key set');
+
+    setProvStatus(status, 'busy', 'Testing…');
+
+    try {
+      const res = await fetch(TAVILY_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          api_key: key,
+          query: 'test',
+          max_results: 1,
+          include_answer: false
+        })
+      });
+
+      if (res.ok) return setProvStatus(status, 'ok', '✓ Connected');
+      const err = await res.json().catch(() => ({}));
+      setProvStatus(status, 'error',
+        `✕ ${err?.detail?.error || err?.detail || `HTTP ${res.status}`}`);
+    } catch (e) {
+      setProvStatus(status, 'error', `✕ ${e.message}`);
+    }
+  }
+
+  $('#btn-test-groq').addEventListener('click', testGroq);
+  $('#btn-test-cohere').addEventListener('click', testCohere);
+  $('#btn-test-tavily').addEventListener('click', testTavily);
+  $('#btn-test-mcp').addEventListener('click', () => connectMcp());
+  $('#btn-refresh-mcp').addEventListener('click', () => connectMcp());
+
+  /* ==========================================================
+     24. CLEAR ALL DATA
+     ========================================================== */
+  $('#btn-clear-all').addEventListener('click', () => {
+    if (!confirm('Delete all local data — chats, agents, projects, library, prompts and settings?')) return;
+    try { localStorage.removeItem(STORAGE_KEY); } catch { /* noop */ }
+    location.reload();
+  });
+
+  /* ==========================================================
+     25. PROMPT STORE
+     ========================================================== */
+  $('#btn-save-prompt').addEventListener('click', () => {
+    const title = $('#set-prompt-title').value.trim();
+    const body  = $('#set-prompt-body').value.trim();
+    if (!title || !body) return;
+
+    store.prompts.unshift({ id: uid(), title, body });
+    save();
+    $('#set-prompt-title').value = '';
+    $('#set-prompt-body').value = '';
+    renderPromptGrid();
+  });
+
+  dom.promptGrid.addEventListener('click', (e) => {
+    const card = e.target.closest('.prompt-card');
+    if (!card) return;
+    const prompt = store.prompts.find((p) => p.id === card.dataset.promptId);
+    if (!prompt) return;
+
+    dom.input.value = prompt.body;
+    resizeInput();
+    syncSend();
+    dom.dlgSettings.close();
+    dom.input.focus();
+    dom.input.setSelectionRange(dom.input.value.length, dom.input.value.length);
+  });
+
+  /* ==========================================================
+     26. AGENT DIALOG
+     ========================================================== */
+  let selectedEmoji = '⚡';
+
+  function buildEmojiRow() {
+    const row = $('#emoji-row');
+    row.innerHTML = '';
+    EMOJI_CHOICES.forEach((emoji) => {
+      const b = el('button', 'emoji-opt', emoji);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(emoji === selectedEmoji));
+      b.addEventListener('click', () => {
+        selectedEmoji = emoji;
+        $$('#emoji-row .emoji-opt').forEach((n) =>
+          n.setAttribute('aria-pressed', String(n.textContent === emoji)));
+      });
+      row.append(b);
+    });
+  }
+
+  function openAgentDialog() {
+    selectedEmoji = '⚡';
+    $('#agent-name').value = '';
+    $('#agent-instructions').value = '';
+    buildEmojiRow();
+    dom.dlgAgent.showModal();
+    setTimeout(() => $('#agent-name').focus(), 60);
+  }
+
+  $('#btn-save-agent').addEventListener('click', () => {
+    const name = $('#agent-name').value.trim();
+    const instructions = $('#agent-instructions').value.trim();
+    if (!name || !instructions) return;
+
+    const agent = { id: uid(), name, emoji: selectedEmoji, instructions };
+    store.agents.push(agent);
+    store.activeAgentId = agent.id;
+
+    const chat = getActiveChat();
+    if (chat) chat.agentId = agent.id;
+
+    save();
+    renderAgents();
+    updateTopbar();
+    dom.dlgAgent.close();
+  });
+
+  /* ==========================================================
+     27. PROJECT DIALOG
+     ========================================================== */
+  $('#btn-save-project').addEventListener('click', () => {
+    const name = $('#project-name').value.trim();
+    const description = $('#project-desc').value.trim();
+    if (!name) return;
+
+    store.projects.unshift({ id: uid(), name, description, createdAt: Date.now() });
+    save();
+    renderProjects();
+
+    $('#project-name').value = '';
+    $('#project-desc').value = '';
+    dom.dlgProject.close();
+
+    const group = $('.nav-group[data-group="projects"]');
+    group.dataset.open = 'true';
+    group.querySelector('.nav-group__head').setAttribute('aria-expanded', 'true');
+  });
+
+  /* ==========================================================
+     28. COMPOSER EVENTS
+     ========================================================== */
+  dom.form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const text = dom.input.value.trim();
+    if (text) send(text);
+  });
+
+  dom.input.addEventListener('input', () => {
+    resizeInput();
+    syncSend();
+  });
+
+  dom.input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+      e.preventDefault();
+      dom.form.requestSubmit();
+    }
+  });
+
+  dom.btnTools.addEventListener('click', () => toggleToolbar());
+
+  dom.toolbar.addEventListener('click', (e) => {
+    const btn = e.target.closest('.tool');
+    if (!btn) return;
+    const key = btn.dataset.tool;
+
+    if (key === 'upload') { dom.fileInput.click(); return; }
+    if (!(key in modes)) return;
+
+    modes[key] = !modes[key];
+    btn.classList.toggle('is-on', modes[key]);
+    btn.setAttribute('aria-pressed', String(modes[key]));
+    renderModebar();
+  });
+
+  dom.modebar.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-mode-off]');
+    if (!btn) return;
+    modes[btn.dataset.modeOff] = false;
+    renderModebar();
+  });
+
+  dom.attachments.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-detach]');
+    if (!btn) return;
+    pendingAttachments = pendingAttachments.filter((f) => f.id !== btn.dataset.detach);
+    renderAttachments();
+    syncSend();
+  });
+
+  dom.fileInput.addEventListener('change', (e) => {
+    if (e.target.files?.length) handleFiles(e.target.files);
+    e.target.value = '';
+  });
+
+  dom.chips.addEventListener('click', (e) => {
+    const chip = e.target.closest('.chip');
+    if (!chip || isSending) return;
+    dom.input.value = chip.dataset.prompt || chip.textContent.trim();
+    resizeInput();
+    syncSend();
+    dom.form.requestSubmit();
+  });
+
+  dom.log.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-copy]');
+    if (!btn) return;
+    const bubble = btn.closest('.msg__body')?.querySelector('.msg__bubble');
+    const text = bubble?.innerText ?? '';
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'Copied';
+      setTimeout(() => { btn.textContent = 'Copy'; }, 1400);
+    }).catch(() => { /* clipboard unavailable */ });
+  });
+
+  /* ==========================================================
+     29. KEYBOARD SHORTCUTS
+     ========================================================== */
+  document.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault();
+      dom.input.focus();
+      return;
+    }
+    if (e.key === 'Escape' && !dom.toolbar.hidden) toggleToolbar(false);
+    if ((e.metaKey || e.ctrlKey) && e.key === ',') {
+      e.preventDefault();
+      openSettings('profile');
+    }
+  });
+
+  /* ==========================================================
+     30. THEME TOGGLE (TOPBAR)
+     ========================================================== */
+  dom.themeBtn.addEventListener('click', () => {
+    const resolved = resolveTheme(store.settings.theme);
+    store.settings.theme = resolved === 'dark' ? 'light' : 'dark';
+    save();
+    applyTheme();
+  });
+
+  /* ==========================================================
+     31. INTRO
+     ========================================================== */
+  function playIntro() {
+    if (REDUCED_MOTION || !window.gsap) return;
+    const tl = window.gsap.timeline({ defaults: { ease: 'power3.out' } });
+    tl.from('.sidebar', { x: -22, opacity: 0, duration: 0.55 })
+      .from('.topbar', { y: -14, opacity: 0, duration: 0.45 }, '-=0.32')
+      .from('.empty__mark',  { scale: 0.6, opacity: 0, duration: 0.5 }, '-=0.28')
+      .from('.empty__title', { y: 18, opacity: 0, duration: 0.5 }, '-=0.36')
+      .from('.empty__sub',   { y: 12, opacity: 0, duration: 0.42 }, '-=0.34')
+      .from('.chip',         { y: 12, opacity: 0, duration: 0.4, stagger: 0.05 }, '-=0.3')
+      .from('.composer__bar',{ y: 16, opacity: 0, duration: 0.45 }, '-=0.28');
+  }
+
+  /* ==========================================================
+     32. BOOT
+     ========================================================== */
+  function boot() {
+    const had = load();
+
+    if (!had || !store.prompts?.length) store.prompts = DEFAULT_PROMPTS;
+    if (!store.agents)   store.agents   = [];
+    if (!store.projects) store.projects = [];
+    if (!store.library)  store.library  = [];
+    if (!store.activeAgentId) store.activeAgentId = BUILTIN_AGENT.id;
+
+    applyTheme();
+    renderSidebar();
+    renderModebar();
+    renderAttachments();
+
+    if (store.activeChatId) {
+      const chat = store.chats.find((c) => c.id === store.activeChatId);
+      if (chat) renderChat(chat);
+      else { store.activeChatId = null; showEmpty(); }
+    } else {
+      showEmpty();
+    }
+
+    updateTopbar();
+    resizeInput();
+    syncSend();
+    setStatus('ready');
+
+    const hasBoth = store.settings.apiKey && store.settings.mcpUrl;
+    dom.hint.hidden = Boolean(hasBoth);
+
+    playIntro();
+
+    if (window.matchMedia('(min-width: 901px)').matches) dom.input.focus();
+  }
+
+  boot();
+
+  /* ==========================================================
+     33. MISC
+     ========================================================== */
+  ['dragover', 'drop'].forEach((evt) => {
+    document.addEventListener(evt, (e) => e.preventDefault());
+  });
+
+  dom.form.addEventListener('drop', (e) => {
+    e.preventDefault();
+    if (e.dataTransfer?.files?.length) handleFiles(e.dataTransfer.files);
+  });
+
+})();
+</script>
+
+</body>
+</html>
