@@ -1044,7 +1044,7 @@ dialog[open] { animation: dlg-in 0.32s var(--ease) both; }
         <div class="toolbar" id="toolbar" hidden role="group" aria-label="Input tools">
           <button class="tool" type="button" data-tool="upload">
             <span class="tool__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-upload"></use></svg></span>
-            <span class="tool__text"><span class="tool__label">Upload files</span><span class="tool__desc">Documents, PDFs, images</span></span>
+            <span class="tool__text"><span class="tool__label">Upload files</span><span class="tool__desc">Any file type • select one or many</span></span>
           </button>
           <button class="tool" type="button" data-tool="deepThinking" aria-pressed="false">
             <span class="tool__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-brain"></use></svg></span>
@@ -1092,7 +1092,7 @@ dialog[open] { animation: dlg-in 0.32s var(--ease) both; }
         </p>
 
         <input type="file" id="file-input" multiple hidden
-               accept=".txt,.md,.json,.csv,.js,.ts,.html,.css,.pdf,image/*" />
+               aria-label="Choose any files to upload" />
       </div>
     </footer>
   </div>
@@ -2078,7 +2078,8 @@ dialog[open] { animation: dlg-in 0.32s var(--ease) both; }
     dom.input.style.height = Math.min(dom.input.scrollHeight, MAX_INPUT_PX) + 'px';
   }
   function syncSend() {
-    dom.send.disabled = isSending || dom.input.value.trim().length === 0;
+    dom.send.disabled = isSending ||
+      (dom.input.value.trim().length === 0 && pendingAttachments.length === 0);
   }
 
   function renderModebar() {
@@ -2132,7 +2133,9 @@ dialog[open] { animation: dlg-in 0.32s var(--ease) both; }
   const TEXT_EXT = /\.(txt|md|markdown|json|csv|js|mjs|ts|tsx|jsx|html|htm|css|scss|py|rb|go|rs|java|c|cpp|h|sh|yml|yaml|xml|svg)$/i;
 
   async function handleFiles(fileList) {
-    const files = Array.from(fileList).slice(0, 6);
+    // Accept every selected/dropped file type and every selected file.
+    // Text-like files are also read so their contents can be included in the prompt.
+    const files = Array.from(fileList);
     for (const file of files) {
       const record = {
         id: uid(), name: file.name,
@@ -2412,15 +2415,18 @@ dialog[open] { animation: dlg-in 0.32s var(--ease) both; }
   }
 
   async function send(text) {
-    if (isSending || !text.trim()) return;
-    const chat = currentChatForWrite();
+    if (isSending) return;
     const rawText = text.trim();
     const attachments = pendingAttachments.slice();
+    if (!rawText && !attachments.length) return;
+
+    const chat = currentChatForWrite();
     const userText = buildUserText(rawText, attachments);
     const userTs = Date.now();
     chat.messages.push({ role: 'user', text: userText, ts: userTs });
     if (chat.title === 'New chat' || chat.title === 'Temporary chat') {
-      chat.title = rawText.slice(0, 42) || 'New chat';
+      chat.title = rawText.slice(0, 42) ||
+        (attachments.length === 1 ? attachments[0].name : `${attachments.length} files`);
     }
     chat.updatedAt = Date.now();
     hideEmpty();
@@ -3136,7 +3142,7 @@ dialog[open] { animation: dlg-in 0.32s var(--ease) both; }
   dom.form.addEventListener('submit', (e) => {
     e.preventDefault();
     const text = dom.input.value.trim();
-    if (text) send(text);
+    if (text || pendingAttachments.length) send(text);
   });
   dom.input.addEventListener('input', () => { resizeInput(); syncSend(); });
   dom.input.addEventListener('keydown', (e) => {
